@@ -5,137 +5,263 @@ import { SITE } from "../site";
 import { url } from "../utils/url";
 import { formatDate } from "../utils/date";
 
-const year = new Date().getFullYear();
 const posts = (await getCollection("posts", ({ data }) => !data.draft)).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
 );
 const tags = [...new Set(posts.flatMap((post) => post.data.tags))];
 const latest = posts[0];
-const tickerText = latest
-  ? `★ NEW POST · ${latest.data.title}　★ 个人博客 ${year}　★ MUSIC ON　★ 动漫 / 代码 / 工具　`
-  : `★ 个人博客 ${year}　★ 等待第一篇　★ MUSIC ON　`;
+const first = posts[posts.length - 1];
+const totalChars = posts.reduce((sum, post) => sum + (post.body ?? "").replace(/\s+/g, "").length, 0);
+const days = first ? Math.max(1, Math.floor((Date.now() - first.data.date.valueOf()) / 86400000) + 1) : 0;
+const calendarData = posts.map((post) => ({
+  date: formatDate(post.data.date),
+  title: post.data.title,
+  url: url(`/posts/${post.id}/`),
+}));
+const repos = [
+  { full: "XHTean/blog", name: "blog", desc: "SorenX 的小站，写代码、工具和喜欢的事。" },
+  { full: "XHTean/shortvideo-parser", name: "shortvideo-parser", desc: "短视频素材解析小程序 + Node 后端。" },
+];
 ---
 <BaseLayout>
-  <div class="ticker" aria-hidden="true">
-    <div class="ticker-track">{tickerText.repeat(2)}</div>
-  </div>
+  <section class="hero-banner">
+    <img src={url("/banner.svg")} alt="" />
+    <div class="hero-copy">
+      <h1>SorenX 的小屋</h1>
+      <p>记录一些值得记下来的东西</p>
+    </div>
+  </section>
 
-  <div class="wrap">
-    <section class="hero">
-      <div class="hero-main">
-        <span class="kicker">● PERSONAL BLOG / {year}</span>
-        <h1>Soren<em>X</em></h1>
-        <p class="sub">{SITE.description} 一个不太严肃的个人博客。</p>
-        <div class="actions">
-          <a class="btn" href={latest ? url(`/posts/${latest.id}/`) : url("/archive/")}>开始读 →</a>
-          <a class="btn ghost" href={url("/about/")}>关于我</a>
-        </div>
-        <div class="hero-meta">
-          <span>{posts.length} 篇文章</span>
-          <span>{tags.length} 个标签</span>
-          <span>UPDATED {latest ? formatDate(latest.data.date) : "—"}</span>
-        </div>
-      </div>
-
-      <div class="idol-wrap">
-        <svg class="star" viewBox="0 0 200 200" fill="currentColor" aria-hidden="true"><path d="M100 0l14 64 52-38-38 52 64 22-64 14 38 52-52-38-14 64-14-64-52 38 38-52-64-14 64-22-38-52 52 38z"/></svg>
-        <div class="idol">
-          <div class="idol-head"><span>PROFILE CARD</span><span>NO.01</span></div>
-          <div class="avatar" aria-hidden="true">
-            <svg viewBox="0 0 200 200">
-              <rect width="200" height="200" fill="#ffd9e6"/>
-              <circle cx="100" cy="112" r="52" fill="#ffe4cf" stroke="#2a2250" stroke-width="3"/>
-              <path d="M44 108c-2-42 22-70 56-70s58 28 56 70c-8-8-14-22-16-36-14 18-38 28-62 28-12 0-24-3-34-8 2 8 0 12 0 16Z" fill="#5b4a7a" stroke="#2a2250" stroke-width="3"/>
-              <path d="M46 108c-8 24-4 46 8 60-14-4-22-24-18-46Z" fill="#5b4a7a" stroke="#2a2250" stroke-width="3"/>
-              <path d="M154 108c8 24 4 46-8 60 14-4 22-24 18-46Z" fill="#5b4a7a" stroke="#2a2250" stroke-width="3"/>
-              <ellipse cx="80" cy="112" rx="7" ry="9" fill="#2a2250"/>
-              <ellipse cx="120" cy="112" rx="7" ry="9" fill="#2a2250"/>
-              <circle cx="82.5" cy="109" r="2.4" fill="#fff"/>
-              <circle cx="122.5" cy="109" r="2.4" fill="#fff"/>
-              <ellipse cx="66" cy="128" rx="9" ry="4.5" fill="#ff9fb3" opacity=".75"/>
-              <ellipse cx="134" cy="128" rx="9" ry="4.5" fill="#ff9fb3" opacity=".75"/>
-              <path d="M94 132c3 5 9 5 12 0" fill="none" stroke="#2a2250" stroke-width="2.6" stroke-linecap="round"/>
-              <path d="m70 76 5 10 11 2-8 8 2 11-10-6-10 6 2-11-8-8 11-2Z" fill="#ffe45e" stroke="#2a2250" stroke-width="2"/>
-              <path d="m134 82 4 7 8 1-6 6 2 8-8-4-7 4 1-8-5-6 8-1Z" fill="#6fe3ff" stroke="#2a2250" stroke-width="2"/>
-            </svg>
+  <div class="home-band">
+    <div class="home-shell">
+      <aside class="home-col home-col-left">
+        <section class="card profile profile-card">
+          <div class="profile-avatar"><img src={url("/avatar.svg")} alt="SorenX 头像" /></div>
+          <p class="profile-name">SorenX</p>
+          <p class="profile-bio">写代码、工具、动漫，<br>和一些值得记下来的事。</p>
+          <div class="profile-socials">
+            <a class="social" href={SITE.repo} target="_blank" rel="noreferrer" aria-label="GitHub">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 .8a11.2 11.2 0 0 0-3.5 21.8c.6.1.8-.2.8-.5v-1.9c-3.1.7-3.8-1.4-3.8-1.4-.5-1.3-1.2-1.6-1.2-1.6-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 1.7 2.6 1.2 3.2.9.1-.7.4-1.2.7-1.5-2.5-.3-5.1-1.3-5.1-5.6 0-1.2.4-2.2 1.1-3-.1-.3-.5-1.4.1-3 0 0 .9-.3 3 1.1a10.4 10.4 0 0 1 5.5 0c2.1-1.4 3-1.1 3-1.1.6 1.6.2 2.7.1 3 .7.8 1.1 1.8 1.1 3 0 4.3-2.6 5.3-5.1 5.6.4.3.7 1 .7 2v2.9c0 .3.2.6.8.5A11.2 11.2 0 0 0 12 .8Z"/></svg>
+            </a>
+            <a class="social" href={url("/rss.xml")} aria-label="RSS">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1.4" fill="currentColor" stroke="none"></circle></svg>
+            </a>
+            <a class="social" href={url("/search/")} aria-label="搜索">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+            </a>
+            <a class="social" href={url("/admin/")} aria-label="后台">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3h.1a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.6 1Z"></path></svg>
+            </a>
           </div>
-          <div class="idol-name"><b>SorenX</b><span>BLOG AUTHOR</span></div>
-          <div class="stats">
-            <div class="stat"><span>POSTS</span><b>{posts.length.toString().padStart(2, "0")}</b></div>
-            <div class="stat"><span>TAGS</span><b>{tags.length.toString().padStart(2, "0")}</b></div>
-          </div>
-          <button class="playline" type="button" data-hero-disc>
-            <b data-disc-text>点击播放 · 夜曲</b>
-            <span class="disc" aria-hidden="true"></span>
+          <button class="music-inline" type="button" data-hero-disc>
+            <span class="music-inline-icon" aria-hidden="true">♪</span>
+            <span data-disc-text>点击播放 · 夜曲</span>
           </button>
-        </div>
-      </div>
-    </section>
+        </section>
 
-    <div class="sec-head">
-      <h2>最新文章 / LATEST</h2>
-      <button class="share-btn" type="button" data-random data-src={url("/search.json")}>随机一篇</button>
-    </div>
+        <section class="card announce announce-card">
+          <h3>公告</h3>
+          <p>欢迎来到我的小站～ 这里主要记录一些学习笔记、折腾过程，和一些喜欢的东西。</p>
+          <a class="text-link" href={url("/about/")}>了解更多 →</a>
+        </section>
 
-    <div class="grid">
-      <section class="card">
-        {posts.map((post, i) => (
-          <article class="latest-post">
-            <div class="cover" aria-hidden="true">{String(i + 1).padStart(2, "0")}</div>
-            <div>
-              <h3><a href={url(`/posts/${post.id}/`)}>{post.data.title}</a></h3>
-              {post.data.description && <p>{post.data.description}</p>}
-              <div class="latest-meta">
-                {formatDate(post.data.date)}
-                {post.data.tags.map((tag) => <span> · #{tag}</span>)}
-              </div>
-            </div>
-          </article>
-        ))}
-        {posts.length === 0 && <p class="empty">// 还没有文章，去后台写第一篇吧。</p>}
-        {posts.length > 0 && <p class="empty">// 下一篇正在加载中…</p>}
-      </section>
-
-      <div class="side">
-        <section class="card">
-          <h2>标签 / TAGS</h2>
-          <div class="chips">
+        <section class="card tags-card">
+          <h3>标签</h3>
+          <div class="tag-list">
             {tags.map((tag) => (
-              <a class="chip" href={url(`/tags/${encodeURIComponent(tag)}/`)}>#{tag}</a>
+              <a class="tag-pill" href={url(`/tags/${encodeURIComponent(tag)}/`)}>#{tag}</a>
             ))}
-            {tags.length === 0 && <span class="empty">还没有标签</span>}
+            {tags.length === 0 && <span class="text-link">还没有标签</span>}
           </div>
         </section>
-        <section class="card">
-          <h2>快速入口 / LINKS</h2>
-          <div class="links">
-            <a href={url("/archive/")}>归档 <span>{String(posts.length).padStart(2, "0")}</span></a>
-            <a href={url("/tags/")}>标签 <span>{String(tags.length).padStart(2, "0")}</span></a>
-            <a href={url("/search/")}>搜索 <span>↗</span></a>
-            <a href={url("/rss.xml")}>RSS <span>↗</span></a>
+      </aside>
+
+      <div class="home-col home-col-main">
+        <section class="card about-card">
+          <h2>About</h2>
+          <p class="about-text">这是 SorenX 的小站。写代码、折腾工具、看动漫，把值得记下来的东西放在这里。</p>
+          <div class="mini-links">
+            <a class="mini-link" href={SITE.repo} target="_blank" rel="noreferrer">GitHub</a>
+            <a class="mini-link" href={url("/rss.xml")}>RSS</a>
+            <a class="mini-link" href={url("/search/")}>搜索</a>
+            <a class="mini-link" href={url("/admin/")}>后台</a>
+          </div>
+          <div class="repo-list">
+            {repos.map((repo) => (
+              <a class="repo" href={`https://github.com/${repo.full}`} target="_blank" rel="noreferrer" data-repo={repo.full}>
+                <span class="repo-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M12 .8a11.2 11.2 0 0 0-3.5 21.8c.6.1.8-.2.8-.5v-1.9c-3.1.7-3.8-1.4-3.8-1.4-.5-1.3-1.2-1.6-1.2-1.6-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 1.7 2.6 1.2 3.2.9.1-.7.4-1.2.7-1.5-2.5-.3-5.1-1.3-5.1-5.6 0-1.2.4-2.2 1.1-3-.1-.3-.5-1.4.1-3 0 0 .9-.3 3 1.1a10.4 10.4 0 0 1 5.5 0c2.1-1.4 3-1.1 3-1.1.6 1.6.2 2.7.1 3 .7.8 1.1 1.8 1.1 3 0 4.3-2.6 5.3-5.1 5.6.4.3.7 1 .7 2v2.9c0 .3.2.6.8.5A11.2 11.2 0 0 0 12 .8Z"/></svg>
+                </span>
+                <span class="repo-body">
+                  <span class="repo-name">XHTean / {repo.name}</span>
+                  <span class="repo-desc">{repo.desc}</span>
+                  <span class="repo-meta">
+                    <span>★ <b data-stars>—</b></span>
+                    <span>⑂ <b data-forks>—</b></span>
+                  </span>
+                </span>
+              </a>
+            ))}
           </div>
         </section>
-        <section class="cassette">
-          <div class="tape" aria-hidden="true"></div>
-          <div><b>夜曲</b><span>MUSIC / DEMO</span></div>
-          <button type="button" data-hero-disc aria-label="播放音乐"></button>
+
+        <section class="card posts-card">
+          <h2>文章</h2>
+          {posts.length > 0 && (
+            <div class="post-tabs">
+              <button class="post-tab active" type="button" data-tag="全部">全部</button>
+              {tags.map((tag) => (
+                <button class="post-tab" type="button" data-tag={tag}>#{tag}</button>
+              ))}
+            </div>
+          )}
+          <div class="post-list">
+            {posts.map((post, index) => (
+              <article class="post-card" data-tags={post.data.tags.join(" ")}>
+                <div class="post-cover" aria-hidden="true">{String(index + 1).padStart(2, "0")}</div>
+                <div class="post-body">
+                  <h3 class="post-title"><a href={url(`/posts/${post.id}/`)}>{post.data.title}</a></h3>
+                  {post.data.description && <p class="post-desc">{post.data.description}</p>}
+                  <div class="post-meta">
+                    <span>{formatDate(post.data.date)}</span>
+                    <span>{(post.body ?? "").replace(/\s+/g, "").length} 字</span>
+                    {post.data.tags.map((tag) => <a class="tag" href={url(`/tags/${encodeURIComponent(tag)}/`)}>#{tag}</a>)}
+                  </div>
+                </div>
+                <span class="post-arrow" aria-hidden="true">→</span>
+              </article>
+            ))}
+            {posts.length === 0 && <p class="about-text">还没有文章，去后台写第一篇吧。</p>}
+          </div>
+          <p style="margin:12px 0 0"><a class="text-link" href={url("/archive/")}>查看全部文章 →</a></p>
         </section>
       </div>
+
+      <aside class="home-col home-col-right">
+        <section class="card stats-card">
+          <h3>站点统计</h3>
+          <div class="stat-list">
+            <div class="stat-row"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h9l4 4v14H6z"></path><path d="M14 3v5h5"></path></svg><span>Posts</span><b>{String(posts.length).padStart(2, "0")}</b></div>
+            <div class="stat-row"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v14H4z"></path><path d="M8 9h8M8 13h5"></path></svg><span>Tags</span><b>{String(tags.length).padStart(2, "0")}</b></div>
+            <div class="stat-row"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h10"></path></svg><span>Total Words</span><b>{totalChars.toLocaleString("en-US")}</b></div>
+            <div class="stat-row"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"></circle><path d="M12 7v5l3 2"></path></svg><span>Running Days</span><b>{days} 天</b></div>
+            <div class="stat-row"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v14H4z"></path><path d="M8 3v4M16 3v4M4 10h16"></path></svg><span>Last Update</span><b>{latest ? formatDate(latest.data.date) : "—"}</b></div>
+          </div>
+        </section>
+
+        <section class="card calendar-card">
+          <h3>日历</h3>
+          <div class="cal-head">
+            <span class="cal-month" data-cal-month>—</span>
+            <span class="cal-nav">
+              <button class="cal-btn" type="button" data-cal-prev aria-label="上个月">‹</button>
+              <button class="cal-btn" type="button" data-cal-next aria-label="下个月">›</button>
+            </span>
+          </div>
+          <div class="cal-week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+          <div class="cal-grid" data-cal-grid></div>
+        </section>
+
+        <section class="card recent-card">
+          <h3>最近</h3>
+          <div class="recent">
+            {posts.slice(0, 4).map((post) => (
+              <a href={url(`/posts/${post.id}/`)}>
+                <span>{post.data.title}</span>
+                <time>{formatDate(post.data.date).slice(5)}</time>
+              </a>
+            ))}
+            {posts.length === 0 && <span class="about-text">还没有文章</span>}
+          </div>
+        </section>
+      </aside>
     </div>
   </div>
 
+  <script type="application/json" id="post-dates" set:html={JSON.stringify(calendarData)}></script>
   <script>
     (function () {
-      var btn = document.querySelector("[data-random]");
-      if (!btn) return;
-      btn.addEventListener("click", async function () {
-        try {
-          var res = await fetch(btn.getAttribute("data-src"));
-          var items = await res.json();
-          if (!items.length) return;
-          var pick = items[Math.floor(Math.random() * items.length)];
-          window.location.href = pick.url;
-        } catch (e) {}
+      var dates = [];
+      try { dates = JSON.parse(document.getElementById("post-dates").textContent || "[]"); } catch (e) {}
+      var map = new Map(dates.map(function (item) { return [item.date, item]; }));
+      var grid = document.querySelector("[data-cal-grid]");
+      var label = document.querySelector("[data-cal-month]");
+      var prev = document.querySelector("[data-cal-prev]");
+      var next = document.querySelector("[data-cal-next]");
+      if (!grid || !label) return;
+
+      var today = new Date();
+      function pad(n) { return String(n).padStart(2, "0"); }
+      function key(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+      var todayKey = key(today);
+      var view = new Date(today.getFullYear(), today.getMonth(), 1);
+
+      function render() {
+        var y = view.getFullYear();
+        var m = view.getMonth();
+        label.textContent = y + " 年 " + (m + 1) + " 月";
+        grid.textContent = "";
+        var offset = (new Date(y, m, 1).getDay() + 6) % 7;
+        var days = new Date(y, m + 1, 0).getDate();
+        var prevDays = new Date(y, m, 0).getDate();
+        for (var i = 0; i < 42; i++) {
+          var day, date, dim = false;
+          if (i < offset) {
+            day = prevDays - offset + 1 + i;
+            date = new Date(y, m - 1, day);
+            dim = true;
+          } else if (i >= offset + days) {
+            day = i - offset - days + 1;
+            date = new Date(y, m + 1, day);
+            dim = true;
+          } else {
+            day = i - offset + 1;
+            date = new Date(y, m, day);
+          }
+          var k = key(date);
+          var cell = document.createElement("div");
+          cell.className = "cal-day" + (dim ? " dim" : "") + (map.has(k) ? " has-post" : "") + (k === todayKey ? " today" : "");
+          if (map.has(k)) {
+            var a = document.createElement("a");
+            a.href = map.get(k).url;
+            a.title = map.get(k).title;
+            a.textContent = day;
+            cell.appendChild(a);
+          } else {
+            cell.textContent = day;
+          }
+          grid.appendChild(cell);
+        }
+      }
+
+      if (prev) prev.addEventListener("click", function () { view.setMonth(view.getMonth() - 1); render(); });
+      if (next) next.addEventListener("click", function () { view.setMonth(view.getMonth() + 1); render(); });
+      render();
+
+      document.querySelectorAll(".post-tab").forEach(function (tab) {
+        tab.addEventListener("click", function () {
+          document.querySelectorAll(".post-tab").forEach(function (t) { t.classList.remove("active"); });
+          tab.classList.add("active");
+          var tag = tab.getAttribute("data-tag");
+          document.querySelectorAll(".post-card").forEach(function (card) {
+            var tags = (card.getAttribute("data-tags") || "").split(" ");
+            card.hidden = tag !== "全部" && !tags.includes(tag);
+          });
+        });
+      });
+
+      document.querySelectorAll("[data-repo]").forEach(function (card) {
+        var repo = card.getAttribute("data-repo");
+        fetch("https://api.github.com/repos/" + repo)
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (data) {
+            if (!data) return;
+            var stars = card.querySelector("[data-stars]");
+            var forks = card.querySelector("[data-forks]");
+            if (stars) stars.textContent = data.stargazers_count;
+            if (forks) forks.textContent = data.forks_count;
+          })
+          .catch(function () {});
       });
     })();
   </script>

@@ -12,10 +12,9 @@ draft: false
 
 ## 怎么写新文章
 
-1. 打开后台（Pages CMS），用 GitHub 登录；
-2. 在「文章」里新建一篇；
-3. 填标题、日期、标签，然后写正文；
-4. 保存后，GitHub Actions 会自动构建并发布。
+1. 打开 `/admin/`，用 fine-grained token 连接；
+2. 新建文章，填标题、日期、标签，写正文；
+3. 保存后，GitHub Actions 会自动构建并发布。
 
 ## 代码块
 
