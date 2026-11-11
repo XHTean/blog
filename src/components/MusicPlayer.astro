@@ -1,0 +1,261 @@
+---
+import { tracks } from "../data/tracks";
+import { url } from "../utils/url";
+
+const list = tracks.map((track) => ({
+  ...track,
+  src: /^https?:/i.test(track.src) ? track.src : url(track.src),
+}));
+---
+<div class="player" data-player>
+  <audio data-audio preload="metadata"></audio>
+  <div class="player-scrim" data-scrim hidden></div>
+
+  <button class="music-fab" type="button" data-fab aria-label="打开音乐播放器" aria-expanded="false">
+    <span class="ring" data-ring aria-hidden="true"></span>
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M9 18V6l10-2v12"></path>
+      <circle cx="6" cy="18" r="3"></circle>
+      <circle cx="16" cy="16" r="3"></circle>
+    </svg>
+  </button>
+
+  <section class="music-panel" data-panel hidden aria-label="音乐播放器">
+    <div class="panel-head">
+      <span class="panel-label">播放列表</span>
+      <button class="panel-close" type="button" data-close aria-label="关闭播放器">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18"></path>
+        </svg>
+      </button>
+    </div>
+
+    <div class="now">
+      <div class="now-disc" data-now-disc aria-hidden="true"><span>S</span></div>
+      <div>
+        <p class="now-title" data-title>夜曲</p>
+        <p class="now-artist" data-artist>SorenX</p>
+      </div>
+    </div>
+
+    <div class="progress">
+      <input class="seek" type="range" min="0" max="1000" value="0" step="1" data-seek aria-label="播放进度">
+      <div class="time"><span data-cur>0:00</span><span data-dur>0:00</span></div>
+    </div>
+
+    <div class="controls">
+      <button class="ctrl" type="button" data-prev aria-label="上一首">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6 5v14"></path><path d="M18 5l-9 7 9 7V5z"></path>
+        </svg>
+      </button>
+      <button class="ctrl ctrl-main" type="button" data-toggle aria-label="播放">
+        <svg class="icon-play" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg>
+        <svg class="icon-pause" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"></path></svg>
+      </button>
+      <button class="ctrl" type="button" data-next aria-label="下一首">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 5v14"></path><path d="M6 5l9 7-9 7V5z"></path>
+        </svg>
+      </button>
+    </div>
+
+    <ul class="tracklist">
+      {list.map((track, i) => (
+        <li>
+          <button class="track-btn" type="button" data-track={i}>
+            <span class="idx">{String(i + 1).padStart(2, "0")}</span>
+            <span class="t">{track.title}</span>
+            <span class="a">{track.artist}</span>
+          </button>
+        </li>
+      ))}
+    </ul>
+
+    <p class="player-note">演示音轨，可在 src/data/tracks.ts 换成你的音乐</p>
+  </section>
+</div>
+
+<script type="application/json" id="track-data" set:html={JSON.stringify(list)}></script>
+<script>
+  (function () {
+    var dataEl = document.getElementById("track-data");
+    var tracks = [];
+    try {
+      tracks = JSON.parse((dataEl && dataEl.textContent) || "[]");
+    } catch (e) {
+      tracks = [];
+    }
+    if (!tracks.length) return;
+
+    var audio = document.querySelector("[data-audio]");
+    var fab = document.querySelector("[data-fab]");
+    var panel = document.querySelector("[data-panel]");
+    var closeBtn = document.querySelector("[data-close]");
+    var scrim = document.querySelector("[data-scrim]");
+    var titleEl = document.querySelector("[data-title]");
+    var artistEl = document.querySelector("[data-artist]");
+    var seek = document.querySelector("[data-seek]");
+    var curEl = document.querySelector("[data-cur]");
+    var durEl = document.querySelector("[data-dur]");
+    var toggleBtn = document.querySelector("[data-toggle]");
+    var prevBtn = document.querySelector("[data-prev]");
+    var nextBtn = document.querySelector("[data-next]");
+    var nowDisc = document.querySelector("[data-now-disc]");
+    var trackBtns = Array.prototype.slice.call(document.querySelectorAll("[data-track]"));
+    var heroDiscs = Array.prototype.slice.call(document.querySelectorAll("[data-hero-disc]"));
+    var captions = Array.prototype.slice.call(document.querySelectorAll("[data-disc-caption]"));
+    var captionTexts = Array.prototype.slice.call(document.querySelectorAll("[data-disc-text]"));
+
+    if (!audio || !fab || !panel) return;
+
+    var index = 0;
+    try {
+      var saved = parseInt(localStorage.getItem("music-index") || "0", 10);
+      if (Number.isInteger(saved)) index = Math.min(Math.max(saved, 0), tracks.length - 1);
+      var savedVol = parseFloat(localStorage.getItem("music-volume") || "0.7");
+      if (isFinite(savedVol)) audio.volume = Math.min(Math.max(savedVol, 0), 1);
+    } catch (e) {}
+
+    function fmt(seconds) {
+      if (!isFinite(seconds) || seconds < 0) return "0:00";
+      var m = Math.floor(seconds / 60);
+      var s = Math.floor(seconds % 60);
+      return m + ":" + String(s).padStart(2, "0");
+    }
+
+    function update() {
+      var track = tracks[index];
+      if (titleEl) titleEl.textContent = track.title;
+      if (artistEl) artistEl.textContent = track.artist;
+      var isPlaying = !audio.paused;
+      heroDiscs.forEach(function (el) { el.classList.toggle("is-playing", isPlaying); });
+      if (nowDisc) nowDisc.classList.toggle("is-playing", isPlaying);
+      if (toggleBtn) {
+        toggleBtn.classList.toggle("is-playing", isPlaying);
+        toggleBtn.setAttribute("aria-label", isPlaying ? "暂停" : "播放");
+      }
+      captions.forEach(function (el) { el.classList.toggle("playing", isPlaying); });
+      captionTexts.forEach(function (el) { el.textContent = (isPlaying ? "正在播放 · " : "点击播放 · ") + track.title; });
+      trackBtns.forEach(function (btn, i) {
+        btn.classList.toggle("active", i === index);
+      });
+    }
+
+    function load(i, autoplay) {
+      index = ((i % tracks.length) + tracks.length) % tracks.length;
+      audio.src = tracks[index].src;
+      try {
+        localStorage.setItem("music-index", String(index));
+      } catch (e) {}
+      update();
+      if (autoplay) {
+        audio.play().catch(function () {});
+      }
+    }
+
+    function toggle() {
+      if (audio.paused) {
+        audio.play().catch(function () {});
+      } else {
+        audio.pause();
+      }
+    }
+
+    function setPanel(open) {
+      if (open) {
+        panel.removeAttribute("hidden");
+        if (scrim) scrim.removeAttribute("hidden");
+        document.body.style.overflow = "hidden";
+      } else {
+        panel.setAttribute("hidden", "");
+        if (scrim) scrim.setAttribute("hidden", "");
+        document.body.style.overflow = "";
+      }
+      fab.setAttribute("aria-expanded", String(open));
+    }
+
+    fab.addEventListener("click", function () {
+      setPanel(panel.hasAttribute("hidden"));
+    });
+
+    if (closeBtn) {
+      closeBtn.addEventListener("click", function () {
+        setPanel(false);
+      });
+    }
+    if (scrim) {
+      scrim.addEventListener("click", function () {
+        setPanel(false);
+      });
+    }
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && !panel.hasAttribute("hidden")) {
+        setPanel(false);
+      }
+    });
+
+    if (toggleBtn) toggleBtn.addEventListener("click", toggle);
+    heroDiscs.forEach(function (el) { el.addEventListener("click", toggle); });
+
+    if (prevBtn) {
+      prevBtn.addEventListener("click", function () {
+        var wasPlaying = !audio.paused;
+        load(index - 1, wasPlaying);
+      });
+    }
+    if (nextBtn) {
+      nextBtn.addEventListener("click", function () {
+        var wasPlaying = !audio.paused;
+        load(index + 1, wasPlaying);
+      });
+    }
+
+    trackBtns.forEach(function (btn, i) {
+      btn.addEventListener("click", function () {
+        load(i, true);
+      });
+    });
+
+    if (seek) {
+      seek.addEventListener("input", function () {
+        if (isFinite(audio.duration) && audio.duration > 0) {
+          audio.currentTime = (Number(seek.value) / 1000) * audio.duration;
+        }
+      });
+    }
+
+    audio.addEventListener("timeupdate", function () {
+      var p = isFinite(audio.duration) && audio.duration > 0 ? audio.currentTime / audio.duration : 0;
+      if (seek) seek.value = String(Math.round(p * 1000));
+      if (fab) fab.style.setProperty("--progress", String(p * 100));
+      if (curEl) curEl.textContent = fmt(audio.currentTime);
+    });
+
+    audio.addEventListener("loadedmetadata", function () {
+      if (durEl) durEl.textContent = fmt(audio.duration);
+    });
+
+    audio.addEventListener("play", update);
+    audio.addEventListener("pause", update);
+    audio.addEventListener("ended", function () {
+      load(index + 1, true);
+    });
+
+    if ("mediaSession" in navigator) {
+      try {
+        navigator.mediaSession.setActionHandler("play", function () { audio.play().catch(function () {}); });
+        navigator.mediaSession.setActionHandler("pause", function () { audio.pause(); });
+        navigator.mediaSession.setActionHandler("previoustrack", function () { load(index - 1, true); });
+        navigator.mediaSession.setActionHandler("nexttrack", function () { load(index + 1, true); });
+      } catch (e) {}
+    }
+
+    var first = tracks[index];
+    if (titleEl) titleEl.textContent = first.title;
+    if (artistEl) artistEl.textContent = first.artist;
+    audio.src = first.src;
+    update();
+  })();
+</script>

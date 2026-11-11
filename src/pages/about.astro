@@ -1,21 +1,34 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { url } from "../utils/url";
 ---
 <BaseLayout title="关于" description="关于这个博客和它的作者">
-  <article class="page">
-    <h1>关于</h1>
-    <div class="prose">
-      <p>你好，我是 SorenX。</p>
-      <p>这里是我的个人博客，记录写代码、折腾工具，以及一些值得记下来的事。</p>
-      <h2>关于本站</h2>
-      <ul>
-        <li>使用 <a href="https://astro.build" target="_blank" rel="noreferrer">Astro</a> 构建</li>
-        <li>托管在 GitHub Pages</li>
-        <li>后台使用 Pages CMS，内容存在 GitHub 仓库里</li>
-        <li>评论由 Giscus 提供</li>
-      </ul>
-      <h2>联系</h2>
-      <p>可以在 <a href="https://github.com/XHTean" target="_blank" rel="noreferrer">GitHub</a> 上找到我。</p>
+  <div class="wrap">
+    <section class="page-head">
+      <h1>关于</h1>
+      <p>ABOUT / SORENX</p>
+    </section>
+
+    <div class="page">
+      <div class="card">
+        <div class="prose">
+          <p>你好，我是 SorenX。</p>
+          <p>这里是我的个人博客，记录写代码、折腾工具、看动漫，和一些值得记下来的事。</p>
+
+          <h2>这个博客</h2>
+          <ul>
+            <li><a href="https://astro.build" target="_blank" rel="noreferrer">Astro</a> 构建，托管在 GitHub Pages</li>
+            <li>文章存在 GitHub 仓库里，后台用 <a href="https://app.pagescms.org" target="_blank" rel="noreferrer">Pages CMS</a></li>
+            <li>评论由 Giscus 提供</li>
+            <li>音乐播放器里是两首自己合成的演示音轨，之后会换成真的歌</li>
+          </ul>
+
+          <h2>联系</h2>
+          <p>可以在 <a href="https://github.com/XHTean" target="_blank" rel="noreferrer">GitHub</a> 上找到我。</p>
+
+          <p><a href={url("/")}>← 回到首页</a></p>
+        </div>
+      </div>
     </div>
-  </article>
+  </div>
 </BaseLayout>

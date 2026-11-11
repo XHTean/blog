@@ -4,7 +4,8 @@
 
 - **站点**：Astro，托管在 GitHub Pages
 - **后台**：Pages CMS（浏览器登录，直接改仓库里的 Markdown）
-- **评论**：Giscus（基于 GitHub Discussions）
+- **评论**：Giscus（基于 GitHub Discussions，装好 App 后把 `src/site.ts` 的 `GISCUS.enabled` 改为 `true`）
+- **功能**：搜索、标签、归档、文章目录、阅读进度、上下篇、随机一篇、音乐播放器、RSS
 
 ## 本地开发
 
@@ -35,8 +36,12 @@ pnpm preview
 2. 仓库 `Settings → General → Features`，勾选 **Discussions**
 3. 安装 giscus App：https://github.com/apps/giscus ，授权到 `XHTean/blog`
 4. 打开 https://giscus.app ，填入仓库，分类已设为 `Announcements`
-5. `src/site.ts` 里已填好 repo ID 和分类 ID
+5. `src/site.ts` 里已填好 repo ID 和分类 ID，把 `GISCUS.enabled` 改成 `true`
 6. 提交后重新部署
+
+## 音乐
+
+播放器曲目在 `src/data/tracks.ts`，音频放 `public/music/`。现在两首是自制的 30 秒演示音轨，直接换成你的 MP3/WAV 即可。
 
 ## 部署
 

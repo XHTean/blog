@@ -1,0 +1,86 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { url } from "../utils/url";
+---
+<BaseLayout title="搜索" description="搜索文章标题、摘要和标签">
+  <div class="wrap">
+    <section class="page-head">
+      <h1>搜索</h1>
+      <p>SEARCH / 标题、摘要、标签</p>
+    </section>
+
+    <div class="search-box">
+      <input type="search" data-search-input placeholder="输入关键词，比如「博客」…" aria-label="搜索关键词">
+      <button type="button" data-search-go>GO</button>
+    </div>
+    <p class="search-hint" data-hint>正在加载…</p>
+    <div class="search-results" data-results></div>
+  </div>
+
+  <script is:inline define:vars={{ src: url("/search.json") }}>
+    (function () {
+      var input = document.querySelector("[data-search-input]");
+      var go = document.querySelector("[data-search-go]");
+      var hint = document.querySelector("[data-hint]");
+      var results = document.querySelector("[data-results]");
+      var items = [];
+      var loaded = false;
+
+      function render(list, query) {
+        results.textContent = "";
+        if (!query) {
+          hint.textContent = "共 " + items.length + " 篇，输入关键词开始搜。";
+          return;
+        }
+        hint.textContent = "找到 " + list.length + " 篇";
+        list.forEach(function (item) {
+          var a = document.createElement("a");
+          a.className = "result";
+          a.href = item.url;
+          var h = document.createElement("h3");
+          h.textContent = item.title;
+          a.appendChild(h);
+          if (item.description) {
+            var p = document.createElement("p");
+            p.textContent = item.description;
+            a.appendChild(p);
+          }
+          var m = document.createElement("div");
+          m.className = "m";
+          m.textContent = item.date + (item.tags.length ? " · #" + item.tags.join(" #") : "");
+          a.appendChild(m);
+          results.appendChild(a);
+        });
+      }
+
+      function search() {
+        if (!loaded) return;
+        var q = (input.value || "").trim().toLowerCase();
+        var list = !q
+          ? []
+          : items.filter(function (item) {
+              return (
+                item.title.toLowerCase().includes(q) ||
+                item.description.toLowerCase().includes(q) ||
+                item.tags.join(" ").toLowerCase().includes(q)
+              );
+            });
+        render(list, q);
+      }
+
+      fetch(src)
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          items = data;
+          loaded = true;
+          render([], "");
+        })
+        .catch(function () {
+          hint.textContent = "搜索索引加载失败";
+        });
+
+      input.addEventListener("input", search);
+      if (go) go.addEventListener("click", search);
+    })();
+  </script>
+</BaseLayout>

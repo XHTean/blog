@@ -22,21 +22,23 @@ type Props = { tag: string; posts: CollectionEntry<"posts">[] };
 const { tag, posts } = Astro.props as Props;
 ---
 <BaseLayout title={`#${tag}`} description={`标签 #${tag} 下的文章`}>
-  <section class="page-head">
-    <h1>#{tag}</h1>
-    <p>共 {posts.length} 篇</p>
-  </section>
-
-  <section class="post-list">
-    {posts.map((post) => (
-      <article class="post-item">
-        <a class="post-link" href={url(`/posts/${post.id}/`)}>{post.data.title}</a>
-        <div class="post-meta">
-          <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
-        </div>
-      </article>
-    ))}
-  </section>
-
-  <p class="back"><a href={url("/")}>← 返回首页</a></p>
+  <div class="wrap">
+    <section class="page-head">
+      <h1>#{tag}</h1>
+      <p>TAG / 共 {posts.length} 篇</p>
+    </section>
+    <section class="card">
+      <ul class="year-list">
+        {posts.map((post) => (
+          <li>
+            <a href={url(`/posts/${post.id}/`)}>
+              <time>{formatDate(post.data.date)}</time>
+              <span>{post.data.title}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+    <p class="empty" style="margin-top:14px"><a href={url("/tags/")}>← 全部标签</a></p>
+  </div>
 </BaseLayout>

@@ -8,6 +8,7 @@ export const SITE = {
 };
 
 export const GISCUS = {
+  enabled: false,
   repo: "XHTean/blog",
   repoId: "R_kgDOVqGPcA",
   category: "Announcements",

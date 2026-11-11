@@ -5,29 +5,138 @@ import { SITE } from "../site";
 import { url } from "../utils/url";
 import { formatDate } from "../utils/date";
 
+const year = new Date().getFullYear();
 const posts = (await getCollection("posts", ({ data }) => !data.draft)).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
 );
+const tags = [...new Set(posts.flatMap((post) => post.data.tags))];
+const latest = posts[0];
+const tickerText = latest
+  ? `★ NEW POST · ${latest.data.title}　★ 个人博客 ${year}　★ MUSIC ON　★ 动漫 / 代码 / 工具　`
+  : `★ 个人博客 ${year}　★ 等待第一篇　★ MUSIC ON　`;
 ---
 <BaseLayout>
-  <section class="hero">
-    <h1>{SITE.title}</h1>
-    <p>{SITE.description}</p>
-  </section>
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker-track">{tickerText.repeat(2)}</div>
+  </div>
 
-  <section class="post-list" aria-label="文章列表">
-    {posts.map((post) => (
-      <article class="post-item">
-        <a class="post-link" href={url(`/posts/${post.id}/`)}>{post.data.title}</a>
-        {post.data.description && <p class="post-desc">{post.data.description}</p>}
-        <div class="post-meta">
-          <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
-          {post.data.tags.map((tag) => (
-            <a class="tag" href={url(`/tags/${encodeURIComponent(tag)}/`)}>#{tag}</a>
-          ))}
+  <div class="wrap">
+    <section class="hero">
+      <div class="hero-main">
+        <span class="kicker">● PERSONAL BLOG / {year}</span>
+        <h1>Soren<em>X</em></h1>
+        <p class="sub">{SITE.description} 一个不太严肃的个人博客。</p>
+        <div class="actions">
+          <a class="btn" href={latest ? url(`/posts/${latest.id}/`) : url("/archive/")}>开始读 →</a>
+          <a class="btn ghost" href={url("/about/")}>关于我</a>
         </div>
-      </article>
-    ))}
-    {posts.length === 0 && <p class="empty">还没有文章，去后台上传第一篇吧。</p>}
-  </section>
+        <div class="hero-meta">
+          <span>{posts.length} 篇文章</span>
+          <span>{tags.length} 个标签</span>
+          <span>UPDATED {latest ? formatDate(latest.data.date) : "—"}</span>
+        </div>
+      </div>
+
+      <div class="idol-wrap">
+        <svg class="star" viewBox="0 0 200 200" fill="currentColor" aria-hidden="true"><path d="M100 0l14 64 52-38-38 52 64 22-64 14 38 52-52-38-14 64-14-64-52 38 38-52-64-14 64-22-38-52 52 38z"/></svg>
+        <div class="idol">
+          <div class="idol-head"><span>PROFILE CARD</span><span>NO.01</span></div>
+          <div class="avatar" aria-hidden="true">
+            <svg viewBox="0 0 200 200">
+              <rect width="200" height="200" fill="#ffd9e6"/>
+              <circle cx="100" cy="112" r="52" fill="#ffe4cf" stroke="#2a2250" stroke-width="3"/>
+              <path d="M44 108c-2-42 22-70 56-70s58 28 56 70c-8-8-14-22-16-36-14 18-38 28-62 28-12 0-24-3-34-8 2 8 0 12 0 16Z" fill="#5b4a7a" stroke="#2a2250" stroke-width="3"/>
+              <path d="M46 108c-8 24-4 46 8 60-14-4-22-24-18-46Z" fill="#5b4a7a" stroke="#2a2250" stroke-width="3"/>
+              <path d="M154 108c8 24 4 46-8 60 14-4 22-24 18-46Z" fill="#5b4a7a" stroke="#2a2250" stroke-width="3"/>
+              <ellipse cx="80" cy="112" rx="7" ry="9" fill="#2a2250"/>
+              <ellipse cx="120" cy="112" rx="7" ry="9" fill="#2a2250"/>
+              <circle cx="82.5" cy="109" r="2.4" fill="#fff"/>
+              <circle cx="122.5" cy="109" r="2.4" fill="#fff"/>
+              <ellipse cx="66" cy="128" rx="9" ry="4.5" fill="#ff9fb3" opacity=".75"/>
+              <ellipse cx="134" cy="128" rx="9" ry="4.5" fill="#ff9fb3" opacity=".75"/>
+              <path d="M94 132c3 5 9 5 12 0" fill="none" stroke="#2a2250" stroke-width="2.6" stroke-linecap="round"/>
+              <path d="m70 76 5 10 11 2-8 8 2 11-10-6-10 6 2-11-8-8 11-2Z" fill="#ffe45e" stroke="#2a2250" stroke-width="2"/>
+              <path d="m134 82 4 7 8 1-6 6 2 8-8-4-7 4 1-8-5-6 8-1Z" fill="#6fe3ff" stroke="#2a2250" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="idol-name"><b>SorenX</b><span>BLOG AUTHOR</span></div>
+          <div class="stats">
+            <div class="stat"><span>POSTS</span><b>{posts.length.toString().padStart(2, "0")}</b></div>
+            <div class="stat"><span>TAGS</span><b>{tags.length.toString().padStart(2, "0")}</b></div>
+          </div>
+          <button class="playline" type="button" data-hero-disc>
+            <b data-disc-text>点击播放 · 夜曲</b>
+            <span class="disc" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <div class="sec-head">
+      <h2>最新文章 / LATEST</h2>
+      <button class="share-btn" type="button" data-random data-src={url("/search.json")}>随机一篇</button>
+    </div>
+
+    <div class="grid">
+      <section class="card">
+        {posts.map((post, i) => (
+          <article class="latest-post">
+            <div class="cover" aria-hidden="true">{String(i + 1).padStart(2, "0")}</div>
+            <div>
+              <h3><a href={url(`/posts/${post.id}/`)}>{post.data.title}</a></h3>
+              {post.data.description && <p>{post.data.description}</p>}
+              <div class="latest-meta">
+                {formatDate(post.data.date)}
+                {post.data.tags.map((tag) => <span> · #{tag}</span>)}
+              </div>
+            </div>
+          </article>
+        ))}
+        {posts.length === 0 && <p class="empty">// 还没有文章，去后台写第一篇吧。</p>}
+        {posts.length > 0 && <p class="empty">// 下一篇正在加载中…</p>}
+      </section>
+
+      <div class="side">
+        <section class="card">
+          <h2>标签 / TAGS</h2>
+          <div class="chips">
+            {tags.map((tag) => (
+              <a class="chip" href={url(`/tags/${encodeURIComponent(tag)}/`)}>#{tag}</a>
+            ))}
+            {tags.length === 0 && <span class="empty">还没有标签</span>}
+          </div>
+        </section>
+        <section class="card">
+          <h2>快速入口 / LINKS</h2>
+          <div class="links">
+            <a href={url("/archive/")}>归档 <span>{String(posts.length).padStart(2, "0")}</span></a>
+            <a href={url("/tags/")}>标签 <span>{String(tags.length).padStart(2, "0")}</span></a>
+            <a href={url("/search/")}>搜索 <span>↗</span></a>
+            <a href={url("/rss.xml")}>RSS <span>↗</span></a>
+          </div>
+        </section>
+        <section class="cassette">
+          <div class="tape" aria-hidden="true"></div>
+          <div><b>夜曲</b><span>MUSIC / DEMO</span></div>
+          <button type="button" data-hero-disc aria-label="播放音乐"></button>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var btn = document.querySelector("[data-random]");
+      if (!btn) return;
+      btn.addEventListener("click", async function () {
+        try {
+          var res = await fetch(btn.getAttribute("data-src"));
+          var items = await res.json();
+          if (!items.length) return;
+          var pick = items[Math.floor(Math.random() * items.length)];
+          window.location.href = pick.url;
+        } catch (e) {}
+      });
+    })();
+  </script>
 </BaseLayout>
