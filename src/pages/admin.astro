@@ -1,0 +1,494 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { url } from "../utils/url";
+---
+<BaseLayout title="管理后台" description="博客管理后台" bare noindex>
+  <div class="admin-wrap">
+    <header class="admin-top">
+      <div>
+        <p class="admin-kicker">ADMIN / XHTean/blog</p>
+        <h1>管理后台</h1>
+      </div>
+      <div class="admin-top-actions">
+        <a class="btn ghost" href={url("/")}>← 回博客</a>
+        <button class="btn ghost" id="logout" type="button" hidden>退出</button>
+      </div>
+    </header>
+
+    <section id="login" class="card admin-login">
+      <h2>连接 GitHub</h2>
+      <p class="admin-note">
+        用只授权 <b>XHTean/blog</b> 的 fine-grained token，权限只需要
+        <b>Contents: Read and write</b>。token 只存在这台手机的浏览器里，不会发到别处。
+      </p>
+      <label class="admin-field">
+        GitHub token
+        <input type="password" id="token" autocomplete="off" placeholder="github_pat_…">
+      </label>
+      <label class="admin-check"><input type="checkbox" id="remember"> 记住 7 天（本机 localStorage）</label>
+      <button class="btn" id="connect" type="button">连接</button>
+      <p class="admin-status" id="login-status" role="status"></p>
+
+      <details class="admin-help">
+        <summary>怎么建 token？</summary>
+        <ol>
+          <li>打开 <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer">Fine-grained tokens</a></li>
+          <li>Repository access 只选 <b>XHTean/blog</b></li>
+          <li>Permissions → Contents：<b>Read and write</b></li>
+          <li>生成后复制，粘到上面的框里</li>
+        </ol>
+      </details>
+    </section>
+
+    <section id="app" hidden>
+      <div class="admin-toolbar">
+        <button class="btn" id="new" type="button">+ 新建文章</button>
+        <button class="btn ghost" id="refresh" type="button">刷新</button>
+        <span class="admin-status" id="status" role="status"></span>
+      </div>
+
+      <div class="admin-grid">
+        <aside class="card admin-list">
+          <h2>文章</h2>
+          <ul id="post-list"></ul>
+          <p class="empty" id="list-empty" hidden>还没有文章</p>
+        </aside>
+
+        <section class="card admin-editor">
+          <form id="form">
+            <label class="admin-field">标题
+              <input id="title" type="text" required placeholder="文章标题">
+            </label>
+            <label class="admin-field">文件名 / slug
+              <input id="slug" type="text" placeholder="hello-world">
+            </label>
+            <label class="admin-field">摘要
+              <textarea id="description" rows="2" placeholder="一两句话介绍"></textarea>
+            </label>
+            <div class="row2">
+              <label class="admin-field">日期
+                <input id="date" type="date" required>
+              </label>
+              <label class="admin-check"><input type="checkbox" id="draft"> 草稿（不发布）</label>
+            </div>
+            <label class="admin-field">标签（逗号分隔）
+              <input id="tags" type="text" placeholder="随笔, 博客">
+            </label>
+            <label class="admin-field">正文（Markdown）
+              <textarea id="body" rows="14" class="mono" placeholder="在这里写正文…"></textarea>
+            </label>
+            <div class="admin-actions">
+              <button class="btn" type="submit">保存并发布</button>
+              <a class="btn ghost" id="view" target="_blank" rel="noreferrer" hidden>查看</a>
+              <button class="btn ghost" id="delete" type="button" hidden>删除</button>
+              <button class="btn ghost" id="cancel" type="button" hidden>取消编辑</button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      var OWNER = "XHTean";
+      var REPO = "blog";
+      var BRANCH = "main";
+      var DIR = "src/content/posts";
+      var API = "https://api.github.com";
+      var base = location.pathname.replace(/admin\/?$/, "");
+      var token = "";
+      var current = null;
+      var posts = [];
+      var slugTouched = false;
+
+      var $ = function (id) { return document.getElementById(id); };
+      var login = $("login");
+      var app = $("app");
+      var loginStatus = $("login-status");
+      var statusEl = $("status");
+
+      function setStatus(message, tone) {
+        statusEl.textContent = message || "";
+        statusEl.setAttribute("data-tone", tone || "");
+      }
+
+      function setLoginStatus(message, tone) {
+        loginStatus.textContent = message || "";
+        loginStatus.setAttribute("data-tone", tone || "");
+      }
+
+      function encodePath(path) {
+        return path.split("/").map(encodeURIComponent).join("/");
+      }
+
+      function b64encode(str) {
+        var bytes = new TextEncoder().encode(str);
+        var bin = "";
+        bytes.forEach(function (b) { bin += String.fromCharCode(b); });
+        return btoa(bin);
+      }
+
+      function b64decode(str) {
+        var bin = atob((str || "").replace(/\s/g, ""));
+        var bytes = Uint8Array.from(bin, function (c) { return c.charCodeAt(0); });
+        return new TextDecoder().decode(bytes);
+      }
+
+      function today() {
+        var d = new Date();
+        var m = String(d.getMonth() + 1).padStart(2, "0");
+        var day = String(d.getDate()).padStart(2, "0");
+        return d.getFullYear() + "-" + m + "-" + day;
+      }
+
+      function slugify(text) {
+        return (text || "")
+          .toLowerCase()
+          .trim()
+          .replace(/[^\p{L}\p{N}]+/gu, "-")
+          .replace(/^-+|-+$/g, "")
+          .slice(0, 60);
+      }
+
+      function parseFrontmatter(raw) {
+        var match = raw.match(/^\uFEFF?---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+        if (!match) return { data: {}, body: raw };
+        var data = {};
+        match[1].split(/\r?\n/).forEach(function (line) {
+          var index = line.indexOf(":");
+          if (index < 0) return;
+          var key = line.slice(0, index).trim();
+          var value = line.slice(index + 1).trim();
+          if (!key) return;
+          if (value.startsWith("[") && value.endsWith("]")) {
+            try { data[key] = JSON.parse(value); }
+            catch (e) {
+              data[key] = value.slice(1, -1).split(",").map(function (s) {
+                return s.trim().replace(/^["']|["']$/g, "");
+              }).filter(Boolean);
+            }
+          } else if (value === "true" || value === "false") {
+            data[key] = value === "true";
+          } else if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+            try { data[key] = JSON.parse(value); }
+            catch (e) { data[key] = value.slice(1, -1); }
+          } else {
+            data[key] = value;
+          }
+        });
+        return { data: data, body: match[2] };
+      }
+
+      function buildContent(data, body) {
+        return [
+          "---",
+          "title: " + JSON.stringify(data.title),
+          "description: " + JSON.stringify(data.description || ""),
+          "date: " + data.date,
+          "tags: " + JSON.stringify(data.tags),
+          "draft: " + (data.draft ? "true" : "false"),
+          "---",
+          "",
+          (body || "").replace(/\r\n/g, "\n").trim(),
+          ""
+        ].join("\n");
+      }
+
+      async function api(path, options) {
+        options = options || {};
+        var headers = {
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28"
+        };
+        if (token) headers.Authorization = "Bearer " + token;
+        if (options.body) headers["Content-Type"] = "application/json";
+        var res = await fetch(API + path, {
+          method: options.method || "GET",
+          headers: headers,
+          body: options.body
+        });
+        if (!res.ok) {
+          var err = new Error("HTTP " + res.status);
+          err.status = res.status;
+          try {
+            var payload = await res.json();
+            if (payload && payload.message) err.message = payload.message;
+          } catch (e) {}
+          throw err;
+        }
+        if (res.status === 204) return null;
+        return res.json();
+      }
+
+      function getStoredToken() {
+        try {
+          var session = sessionStorage.getItem("blog_admin_token");
+          if (session) return session;
+          var local = localStorage.getItem("blog_admin_token");
+          var exp = parseInt(localStorage.getItem("blog_admin_exp") || "0", 10);
+          if (local && exp > Date.now()) return local;
+          localStorage.removeItem("blog_admin_token");
+          localStorage.removeItem("blog_admin_exp");
+        } catch (e) {}
+        return "";
+      }
+
+      function storeToken(value, remember) {
+        token = value;
+        try {
+          sessionStorage.setItem("blog_admin_token", value);
+          if (remember) {
+            localStorage.setItem("blog_admin_token", value);
+            localStorage.setItem("blog_admin_exp", String(Date.now() + 7 * 86400000));
+          } else {
+            localStorage.removeItem("blog_admin_token");
+            localStorage.removeItem("blog_admin_exp");
+          }
+        } catch (e) {}
+      }
+
+      function clearToken() {
+        token = "";
+        try {
+          sessionStorage.removeItem("blog_admin_token");
+          localStorage.removeItem("blog_admin_token");
+          localStorage.removeItem("blog_admin_exp");
+        } catch (e) {}
+      }
+
+      function showLogin(message, tone) {
+        app.hidden = true;
+        $("logout").hidden = true;
+        login.hidden = false;
+        setLoginStatus(message || "", tone);
+      }
+
+      function showApp() {
+        login.hidden = true;
+        app.hidden = false;
+        $("logout").hidden = false;
+      }
+
+      function renderList() {
+        var list = $("post-list");
+        list.textContent = "";
+        posts.forEach(function (post) {
+          var li = document.createElement("li");
+          var button = document.createElement("button");
+          button.type = "button";
+          button.className = "admin-post" + (current && current.path === post.path ? " active" : "");
+          var title = document.createElement("b");
+          title.textContent = post.data.title || post.name;
+          var meta = document.createElement("span");
+          meta.textContent = (post.data.date || "") + (post.data.draft ? " · 草稿" : "");
+          button.appendChild(title);
+          button.appendChild(meta);
+          button.addEventListener("click", function () { editPost(post); });
+          li.appendChild(button);
+          list.appendChild(li);
+        });
+        $("list-empty").hidden = posts.length > 0;
+      }
+
+      async function loadPosts() {
+        setStatus("加载中…");
+        var items = [];
+        try {
+          items = await api("/repos/" + OWNER + "/" + REPO + "/contents/" + encodePath(DIR) + "?ref=" + BRANCH);
+        } catch (e) {
+          if (e.status !== 404) throw e;
+        }
+        var files = (items || []).filter(function (item) {
+          return item.type === "file" && item.name.endsWith(".md");
+        });
+        posts = await Promise.all(files.map(async function (file) {
+          var data = await api("/repos/" + OWNER + "/" + REPO + "/contents/" + encodePath(file.path) + "?ref=" + BRANCH);
+          var parsed = parseFrontmatter(b64decode(data.content));
+          return {
+            name: file.name,
+            path: file.path,
+            sha: data.sha,
+            data: parsed.data,
+            body: parsed.body
+          };
+        }));
+        posts.sort(function (a, b) {
+          return String(b.data.date || "").localeCompare(String(a.data.date || ""));
+        });
+        renderList();
+        setStatus(posts.length + " 篇文章", "ok");
+      }
+
+      function editPost(post) {
+        current = { path: post.path, sha: post.sha, slug: post.name.replace(/\.md$/, "") };
+        $("title").value = post.data.title || "";
+        $("slug").value = current.slug;
+        $("slug").disabled = true;
+        $("description").value = post.data.description || "";
+        $("date").value = String(post.data.date || "").slice(0, 10);
+        $("tags").value = (post.data.tags || []).join(", ");
+        $("draft").checked = Boolean(post.data.draft);
+        $("body").value = post.body || "";
+        $("delete").hidden = false;
+        $("cancel").hidden = false;
+        $("view").hidden = false;
+        $("view").href = base + "posts/" + encodeURIComponent(current.slug) + "/";
+        setStatus("编辑《" + (post.data.title || post.name) + "》");
+        renderList();
+      }
+
+      function newPost() {
+        current = null;
+        slugTouched = false;
+        $("form").reset();
+        $("slug").disabled = false;
+        $("date").value = today();
+        $("delete").hidden = true;
+        $("cancel").hidden = true;
+        $("view").hidden = true;
+        setStatus("新文章");
+        $("title").focus();
+        renderList();
+      }
+
+      async function savePost(event) {
+        event.preventDefault();
+        var title = $("title").value.trim();
+        var date = $("date").value;
+        var slug = ($("slug").value.trim() || slugify(title) || "post-" + Date.now())
+          .replace(/[\/\\]/g, "-");
+        if (!title) return setStatus("标题不能为空", "err");
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return setStatus("日期格式应为 YYYY-MM-DD", "err");
+        var tags = $("tags").value.split(",").map(function (tag) { return tag.trim(); }).filter(Boolean);
+        var content = buildContent({
+          title: title,
+          description: $("description").value.trim(),
+          date: date,
+          tags: tags,
+          draft: $("draft").checked
+        }, $("body").value);
+        var path = current ? current.path : DIR + "/" + slug + ".md";
+        var payload = {
+          message: "post: " + title,
+          content: b64encode(content),
+          branch: BRANCH
+        };
+        if (current) payload.sha = current.sha;
+        setStatus("保存中…");
+        try {
+          var result = await api("/repos/" + OWNER + "/" + REPO + "/contents/" + encodePath(path), {
+            method: "PUT",
+            body: JSON.stringify(payload)
+          });
+          current = { path: path, sha: result.content.sha, slug: slug };
+          $("slug").value = slug;
+          $("slug").disabled = true;
+          $("delete").hidden = false;
+          $("cancel").hidden = false;
+          $("view").hidden = false;
+          $("view").href = base + "posts/" + encodeURIComponent(slug) + "/";
+          var savedPost = {
+            name: path.split("/").pop(),
+            path: path,
+            sha: result.content.sha,
+            data: {
+              title: title,
+              description: $("description").value.trim(),
+              date: date,
+              tags: tags,
+              draft: $("draft").checked
+            },
+            body: $("body").value
+          };
+          var existing = posts.findIndex(function (item) { return item.path === path; });
+          if (existing >= 0) posts[existing] = savedPost;
+          else posts.push(savedPost);
+          posts.sort(function (a, b) {
+            return String(b.data.date || "").localeCompare(String(a.data.date || ""));
+          });
+          renderList();
+          setStatus("已保存，约 1 分钟后自动发布", "ok");
+        } catch (e) {
+          setStatus("保存失败：" + e.message, "err");
+        }
+      }
+
+      async function deletePost() {
+        if (!current) return;
+        var title = $("title").value.trim() || current.slug;
+        if (!confirm("确定删除《" + title + "》？这个操作不能撤销。")) return;
+        setStatus("删除中…");
+        try {
+          await api("/repos/" + OWNER + "/" + REPO + "/contents/" + encodePath(current.path), {
+            method: "DELETE",
+            body: JSON.stringify({ message: "delete post: " + title, sha: current.sha, branch: BRANCH })
+          });
+          var removedPath = current.path;
+          posts = posts.filter(function (item) { return item.path !== removedPath; });
+          newPost();
+          renderList();
+          setStatus("已删除", "ok");
+        } catch (e) {
+          setStatus("删除失败：" + e.message, "err");
+        }
+      }
+
+      async function connect() {
+        var value = $("token").value.trim();
+        if (!value) return setLoginStatus("先填 token", "err");
+        token = value;
+        setLoginStatus("验证中…");
+        try {
+          await api("/repos/" + OWNER + "/" + REPO);
+          storeToken(value, $("remember").checked);
+          $("token").value = "";
+          showApp();
+          await loadPosts();
+        } catch (e) {
+          token = "";
+          setLoginStatus("连接失败：" + e.message, "err");
+        }
+      }
+
+      function logout() {
+        clearToken();
+        current = null;
+        posts = [];
+        $("post-list").textContent = "";
+        showLogin("已退出", "ok");
+      }
+
+      $("connect").addEventListener("click", connect);
+      $("logout").addEventListener("click", logout);
+      $("new").addEventListener("click", newPost);
+      $("refresh").addEventListener("click", function () { loadPosts().catch(function (e) { setStatus("刷新失败：" + e.message, "err"); }); });
+      $("form").addEventListener("submit", savePost);
+      $("delete").addEventListener("click", deletePost);
+      $("cancel").addEventListener("click", newPost);
+      $("title").addEventListener("input", function () {
+        if (!current && !slugTouched) {
+          $("slug").value = slugify($("title").value);
+        }
+      });
+      $("slug").addEventListener("input", function () { slugTouched = true; });
+
+      var stored = getStoredToken();
+      if (stored) {
+        token = stored;
+        setLoginStatus("正在用已保存的 token 连接…");
+        api("/repos/" + OWNER + "/" + REPO)
+          .then(function () {
+            showApp();
+            return loadPosts();
+          })
+          .catch(function (e) {
+            clearToken();
+            showLogin("保存的 token 失效了，请重新填：" + e.message, "err");
+          });
+      } else {
+        showLogin("", "");
+      }
+    })();
+  </script>
+</BaseLayout>

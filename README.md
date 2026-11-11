@@ -3,7 +3,7 @@
 一个带管理后台的静态博客：
 
 - **站点**：Astro，托管在 GitHub Pages
-- **后台**：Pages CMS（浏览器登录，直接改仓库里的 Markdown）
+- **后台**：站内 `/admin`（用 GitHub fine-grained token 登录，直接改仓库里的 Markdown，不需要装 GitHub App）
 - **评论**：Giscus（基于 GitHub Discussions，装好 App 后把 `src/site.ts` 的 `GISCUS.enabled` 改为 `true`）
 - **功能**：搜索、标签、归档、文章目录、阅读进度、上下篇、随机一篇、音乐播放器、RSS
 
@@ -21,12 +21,16 @@ pnpm build
 pnpm preview
 ```
 
-## 写文章
+## 管理后台
 
-1. 打开 https://app.pagescms.org ，用 GitHub 登录
-2. 安装 Pages CMS 的 GitHub App，选择 `XHTean/blog` 仓库
-3. 在「文章」里新建，填标题、日期、标签，写正文
-4. 保存后会自动提交到仓库，GitHub Actions 重新构建发布
+打开 https://xhtean.github.io/blog/admin/ （或本地 `/admin/`）。
+
+1. 建一个 fine-grained token：https://github.com/settings/personal-access-tokens/new
+2. Repository access 只选 `XHTean/blog`
+3. Permissions → Contents：**Read and write**
+4. 把 token 粘进后台，连接后就能新建/编辑/删除文章
+
+token 默认只存在当前标签页，勾「记住 7 天」才写本机 localStorage；点「退出」会清掉。后台页面不会被搜索引擎收录。
 
 文章存在 `src/content/posts/`，图片默认上传到 `public/uploads/`。
 

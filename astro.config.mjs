@@ -5,7 +5,7 @@ export default defineConfig({
   site: "https://xhtean.github.io",
   base: "/blog",
   trailingSlash: "always",
-  integrations: [sitemap()],
+  integrations: [sitemap({ filter: (page) => !page.includes("/admin") })],
   markdown: {
     shikiConfig: { theme: "github-dark", wrap: true },
   },
