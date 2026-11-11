@@ -6,40 +6,8 @@
   "bio": "写代码、工具、动漫，\n和一些值得记下来的事。",
   "announcement": "欢迎来到我的小站～ 这里主要记录一些学习笔记、折腾过程，和一些喜欢的东西。",
   "about": "这是 SorenX 的小站。写代码、折腾工具、看动漫，把值得记下来的东西放在这里。",
-  "banner": "/banner.svg",
+  "banner": "/uploads/banner-1794417990405.jpg",
   "avatar": "/avatar.svg",
-  "socials": [
-    {
-      "label": "GitHub",
-      "url": "https://github.com/XHTean",
-      "icon": "github"
-    },
-    {
-      "label": "RSS",
-      "url": "/rss.xml",
-      "icon": "rss"
-    },
-    {
-      "label": "搜索",
-      "url": "/search/",
-      "icon": "search"
-    },
-    {
-      "label": "后台",
-      "url": "/admin/",
-      "icon": "settings"
-    }
-  ],
-  "repos": [
-    {
-      "full": "XHTean/blog",
-      "desc": "SorenX 的小站，写代码、工具和喜欢的事。"
-    },
-    {
-      "full": "XHTean/shortvideo-parser",
-      "desc": "短视频素材解析小程序 + Node 后端。"
-    }
-  ],
   "nav": [
     {
       "label": "首页",
@@ -64,6 +32,28 @@
     {
       "label": "更多",
       "url": "/more/"
+    }
+  ],
+  "socials": [
+    {
+      "label": "GitHub",
+      "url": "https://github.com/XHTean",
+      "icon": "github"
+    },
+    {
+      "label": "RSS",
+      "url": "/rss.xml",
+      "icon": "rss"
+    },
+    {
+      "label": "搜索",
+      "url": "/search/",
+      "icon": "search"
+    },
+    {
+      "label": "后台",
+      "url": "/admin/",
+      "icon": "settings"
     }
   ],
   "friends": [
@@ -126,6 +116,16 @@
       "title": "DeepSeek",
       "note": "常用的模型服务。",
       "url": "https://www.deepseek.com"
+    }
+  ],
+  "repos": [
+    {
+      "full": "XHTean/blog",
+      "desc": "SorenX 的小站，写代码、工具和喜欢的事。"
+    },
+    {
+      "full": "XHTean/shortvideo-parser",
+      "desc": "短视频素材解析小程序 + Node 后端。"
     }
   ]
 }
