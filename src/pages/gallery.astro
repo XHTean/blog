@@ -1,0 +1,62 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { GALLERY } from "../site";
+import { url } from "../utils/url";
+
+const asset = (path: string) => (/^https?:/i.test(path) ? path : url(path));
+---
+<BaseLayout title="相册" description="一些图">
+  <div class="wrap">
+    <section class="page-head">
+      <h1>相册</h1>
+      <p>GALLERY / {GALLERY.length} 张</p>
+    </section>
+
+    {GALLERY.length > 0 ? (
+      <div class="gallery-grid">
+        {GALLERY.map((image) => (
+          <button class="gallery-item" type="button" data-full={asset(image.src)} data-caption={image.caption}>
+            <img src={asset(image.src)} alt={image.caption} loading="lazy" />
+            <span>{image.caption}</span>
+          </button>
+        ))}
+      </div>
+    ) : (
+      <div class="card empty-state">相册还是空的，去后台「站点设置 → 相册」上传。</div>
+    )}
+  </div>
+
+  <div class="lightbox" data-lightbox hidden>
+    <button class="lightbox-close" type="button" data-lightbox-close aria-label="关闭">×</button>
+    <img data-lightbox-img alt="" />
+    <p data-lightbox-caption></p>
+  </div>
+
+  <script>
+    (function () {
+      var box = document.querySelector("[data-lightbox]");
+      var img = document.querySelector("[data-lightbox-img]");
+      var caption = document.querySelector("[data-lightbox-caption]");
+      if (!box || !img) return;
+
+      function close() {
+        box.hidden = true;
+        document.body.style.overflow = "";
+      }
+
+      document.querySelectorAll(".gallery-item").forEach(function (item) {
+        item.addEventListener("click", function () {
+          img.src = item.getAttribute("data-full");
+          img.alt = item.getAttribute("data-caption") || "";
+          if (caption) caption.textContent = item.getAttribute("data-caption") || "";
+          box.hidden = false;
+          document.body.style.overflow = "hidden";
+        });
+      });
+
+      document.querySelector("[data-lightbox-close]").addEventListener("click", close);
+      box.addEventListener("click", function (event) { if (event.target === box) close(); });
+      document.addEventListener("keydown", function (event) { if (event.key === "Escape" && !box.hidden) close(); });
+    })();
+  </script>
+</BaseLayout>

@@ -21,6 +21,9 @@ export const ABOUT = data.about;
 export const SOCIALS = data.socials;
 export const NAV = data.nav;
 export const REPOS = data.repos;
+export const FRIENDS = data.friends;
+export const GALLERY = data.gallery;
+export const PROJECTS = data.projects;
 
 export const GISCUS = {
   enabled: false,

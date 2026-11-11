@@ -1,0 +1,32 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { url } from "../utils/url";
+import { formatDate } from "../utils/date";
+
+const posts = (await getCollection("posts", ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
+---
+<BaseLayout title="时间线" description="按时间排列的所有文章">
+  <div class="wrap">
+    <section class="page-head">
+      <h1>时间线</h1>
+      <p>TIMELINE / {posts.length} 篇</p>
+    </section>
+
+    <div class="timeline">
+      {posts.map((post) => (
+        <a class="timeline-item" href={url(`/posts/${post.id}/`)}>
+          <span class="timeline-dot" aria-hidden="true"></span>
+          <time>{formatDate(post.data.date)}</time>
+          <span class="timeline-body">
+            <b>{post.data.title}</b>
+            {post.data.description && <span>{post.data.description}</span>}
+          </span>
+        </a>
+      ))}
+      {posts.length === 0 && <p class="empty-state">还没有文章。</p>}
+    </div>
+  </div>
+</BaseLayout>

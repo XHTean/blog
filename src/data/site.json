@@ -50,12 +50,50 @@
       "url": "/archive/"
     },
     {
-      "label": "标签",
-      "url": "/tags/"
+      "label": "友链",
+      "url": "/friends/"
+    },
+    {
+      "label": "相册",
+      "url": "/gallery/"
+    },
+    {
+      "label": "项目",
+      "url": "/projects/"
     },
     {
       "label": "关于",
       "url": "/about/"
+    }
+  ],
+  "friends": [
+    {
+      "name": "SorenX 的小站",
+      "url": "https://xhtean.github.io/blog/",
+      "avatar": "/avatar.svg",
+      "desc": "本站，先占个位置，之后换成朋友。"
+    }
+  ],
+  "gallery": [
+    {
+      "src": "/banner.svg",
+      "caption": "小屋横幅"
+    },
+    {
+      "src": "/avatar.svg",
+      "caption": "Q 版头像"
+    }
+  ],
+  "projects": [
+    {
+      "name": "XHTean/blog",
+      "url": "https://github.com/XHTean/blog",
+      "desc": "这个博客的源码，Astro + GitHub Pages + 自建后台。"
+    },
+    {
+      "name": "XHTean/shortvideo-parser",
+      "url": "https://github.com/XHTean/shortvideo-parser",
+      "desc": "短视频素材解析小程序 + Node 后端。"
     }
   ]
 }

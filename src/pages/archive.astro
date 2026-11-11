@@ -19,7 +19,7 @@ const years = [...groups.entries()].sort((a, b) => b[0] - a[0]);
   <div class="wrap">
     <section class="page-head">
       <h1>归档</h1>
-      <p>ARCHIVE / 共 {posts.length} 篇</p>
+      <p>ARCHIVE / 共 {posts.length} 篇 · <a href={url("/timeline/")}>时间线视图</a></p>
     </section>
 
     {years.map(([year, items]) => (

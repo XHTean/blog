@@ -1,0 +1,28 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { PROJECTS } from "../site";
+---
+<BaseLayout title="项目" description="做过的一些东西">
+  <div class="wrap">
+    <section class="page-head">
+      <h1>项目</h1>
+      <p>PROJECTS / {PROJECTS.length} 个</p>
+    </section>
+
+    {PROJECTS.length > 0 ? (
+      <div class="project-grid">
+        {PROJECTS.map((project) => (
+          <a class="project-card" href={project.url} target="_blank" rel="noreferrer">
+            <div class="project-top">
+              <b>{project.name}</b>
+              <span aria-hidden="true">↗</span>
+            </div>
+            <p>{project.desc}</p>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <div class="card empty-state">还没有项目，去后台「站点设置 → 项目」添加。</div>
+    )}
+  </div>
+</BaseLayout>

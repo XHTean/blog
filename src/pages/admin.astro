@@ -154,6 +154,18 @@ import { url } from "../utils/url";
           <label class="admin-field">GitHub 项目（每行：owner/repo|描述）
             <textarea id="set-repos" rows="4" class="mono"></textarea>
           </label>
+          <label class="admin-field">友链（每行：名称|链接|头像|描述）
+            <textarea id="set-friends" rows="4" class="mono"></textarea>
+          </label>
+          <label class="admin-field">相册（每行：图片路径|说明）
+            <textarea id="set-gallery" rows="4" class="mono"></textarea>
+          </label>
+          <label class="btn ghost admin-upload">上传相册图片
+            <input type="file" accept="image/*" data-upload="gallery" hidden>
+          </label>
+          <label class="admin-field">项目（每行：名称|链接|描述）
+            <textarea id="set-projects" rows="4" class="mono"></textarea>
+          </label>
 
           <div class="admin-actions">
             <button class="btn" type="submit">保存设置</button>
@@ -587,6 +599,15 @@ import { url } from "../utils/url";
         $("set-repos").value = (settings.repos || []).map(function (item) {
           return [item.full || "", item.desc || ""].join("|");
         }).join("\n");
+        $("set-friends").value = (settings.friends || []).map(function (item) {
+          return [item.name || "", item.url || "", item.avatar || "", item.desc || ""].join("|");
+        }).join("\n");
+        $("set-gallery").value = (settings.gallery || []).map(function (item) {
+          return [item.src || "", item.caption || ""].join("|");
+        }).join("\n");
+        $("set-projects").value = (settings.projects || []).map(function (item) {
+          return [item.name || "", item.url || "", item.desc || ""].join("|");
+        }).join("\n");
         updateAssetPreviews();
       }
 
@@ -611,6 +632,27 @@ import { url } from "../utils/url";
           var parts = line.split("|").map(function (item) { return item.trim(); });
           return { label: parts[0] || "", url: parts[1] || "/" };
         }).filter(function (item) { return item.label; });
+      }
+
+      function parseFriends(text) {
+        return text.split(/\r?\n/).map(function (line) { return line.trim(); }).filter(Boolean).map(function (line) {
+          var parts = line.split("|").map(function (item) { return item.trim(); });
+          return { name: parts[0] || "", url: parts[1] || "", avatar: parts[2] || "/avatar.svg", desc: parts[3] || "" };
+        }).filter(function (item) { return item.name && item.url; });
+      }
+
+      function parseGallery(text) {
+        return text.split(/\r?\n/).map(function (line) { return line.trim(); }).filter(Boolean).map(function (line) {
+          var parts = line.split("|").map(function (item) { return item.trim(); });
+          return { src: parts[0] || "", caption: parts[1] || "" };
+        }).filter(function (item) { return item.src; });
+      }
+
+      function parseProjects(text) {
+        return text.split(/\r?\n/).map(function (line) { return line.trim(); }).filter(Boolean).map(function (line) {
+          var parts = line.split("|").map(function (item) { return item.trim(); });
+          return { name: parts[0] || "", url: parts[1] || "", desc: parts[2] || "" };
+        }).filter(function (item) { return item.name && item.url; });
       }
 
       function parseRepos(text) {
@@ -639,6 +681,9 @@ import { url } from "../utils/url";
           avatar: $("set-avatar").value.trim() || "/avatar.svg",
           nav: parseNav($("set-nav").value),
           socials: parseSocials($("set-socials").value),
+          friends: parseFriends($("set-friends").value),
+          gallery: parseGallery($("set-gallery").value),
+          projects: parseProjects($("set-projects").value),
           repos: parseRepos($("set-repos").value)
         };
         var payload = {
@@ -681,6 +726,12 @@ import { url } from "../utils/url";
           body: JSON.stringify({ message: "upload " + field, content: base64, branch: BRANCH })
         });
         var value = "/uploads/" + filename;
+        if (field === "gallery") {
+          var galleryField = $("set-gallery");
+          galleryField.value = (galleryField.value.trim() ? galleryField.value.trim() + "\n" : "") + value + "|";
+          setSettingsStatus("相册图片已上传，记得填写说明并保存设置", "ok");
+          return;
+        }
         $(field === "avatar" ? "set-avatar" : "set-banner").value = value;
         updateAssetPreviews();
         setSettingsStatus("图片已上传，记得保存设置", "ok");

@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { SITE, FRIENDS } from "../site";
+import { url } from "../utils/url";
+
+const asset = (path: string) => (/^https?:/i.test(path) ? path : url(path));
+---
+<BaseLayout title="友链" description="朋友们的小站">
+  <div class="wrap">
+    <section class="page-head">
+      <h1>友链</h1>
+      <p>FRIENDS / {FRIENDS.length} 个</p>
+    </section>
+
+    {FRIENDS.length > 0 ? (
+      <div class="friend-grid">
+        {FRIENDS.map((friend) => (
+          <a class="friend-card" href={friend.url} target="_blank" rel="noreferrer">
+            <img src={asset(friend.avatar)} alt={friend.name} loading="lazy" />
+            <div>
+              <b>{friend.name}</b>
+              <p>{friend.desc}</p>
+            </div>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <div class="card empty-state">还没有友链，去后台「站点设置 → 友链」添加。</div>
+    )}
+
+    <section class="card friend-apply">
+      <h2>交换友链</h2>
+      <p class="about-text">欢迎交换友链，去 <a href={SITE.repo} target="_blank" rel="noreferrer">GitHub</a> 找我，或者在评论区留言。</p>
+    </section>
+  </div>
+</BaseLayout>
