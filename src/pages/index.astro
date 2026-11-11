@@ -1,7 +1,8 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { SITE } from "../site";
+import { SITE, PROFILE, ANNOUNCEMENT, ABOUT, SOCIALS, REPOS } from "../site";
+import SocialIcon from "../components/SocialIcon.astro";
 import { url } from "../utils/url";
 import { formatDate } from "../utils/date";
 
@@ -18,17 +19,14 @@ const calendarData = posts.map((post) => ({
   title: post.data.title,
   url: url(`/posts/${post.id}/`),
 }));
-const repos = [
-  { full: "XHTean/blog", name: "blog", desc: "SorenX 的小站，写代码、工具和喜欢的事。" },
-  { full: "XHTean/shortvideo-parser", name: "shortvideo-parser", desc: "短视频素材解析小程序 + Node 后端。" },
-];
+const asset = (path: string) => (/^https?:/i.test(path) ? path : url(path));
 ---
 <BaseLayout>
   <section class="hero-banner">
-    <img src={url("/banner.svg")} alt="" />
+    <img src={asset(PROFILE.banner)} alt="" />
     <div class="hero-copy">
-      <h1>SorenX 的小屋</h1>
-      <p>记录一些值得记下来的东西</p>
+      <h1>{SITE.title}</h1>
+      <p>{SITE.subtitle}</p>
     </div>
   </section>
 
@@ -36,22 +34,21 @@ const repos = [
     <div class="home-shell">
       <aside class="home-col home-col-left">
         <section class="card profile profile-card">
-          <div class="profile-avatar"><img src={url("/avatar.svg")} alt="SorenX 头像" /></div>
-          <p class="profile-name">SorenX</p>
-          <p class="profile-bio">写代码、工具、动漫，<br>和一些值得记下来的事。</p>
+          <div class="profile-avatar"><img src={asset(PROFILE.avatar)} alt={`${SITE.author} 头像`} /></div>
+          <p class="profile-name">{SITE.author}</p>
+          <p class="profile-bio">{PROFILE.bio}</p>
           <div class="profile-socials">
-            <a class="social" href={SITE.repo} target="_blank" rel="noreferrer" aria-label="GitHub">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 .8a11.2 11.2 0 0 0-3.5 21.8c.6.1.8-.2.8-.5v-1.9c-3.1.7-3.8-1.4-3.8-1.4-.5-1.3-1.2-1.6-1.2-1.6-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 1.7 2.6 1.2 3.2.9.1-.7.4-1.2.7-1.5-2.5-.3-5.1-1.3-5.1-5.6 0-1.2.4-2.2 1.1-3-.1-.3-.5-1.4.1-3 0 0 .9-.3 3 1.1a10.4 10.4 0 0 1 5.5 0c2.1-1.4 3-1.1 3-1.1.6 1.6.2 2.7.1 3 .7.8 1.1 1.8 1.1 3 0 4.3-2.6 5.3-5.1 5.6.4.3.7 1 .7 2v2.9c0 .3.2.6.8.5A11.2 11.2 0 0 0 12 .8Z"/></svg>
-            </a>
-            <a class="social" href={url("/rss.xml")} aria-label="RSS">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1.4" fill="currentColor" stroke="none"></circle></svg>
-            </a>
-            <a class="social" href={url("/search/")} aria-label="搜索">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-            </a>
-            <a class="social" href={url("/admin/")} aria-label="后台">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3h.1a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.6 1Z"></path></svg>
-            </a>
+            {SOCIALS.map((social) => (
+              <a
+                class="social"
+                href={/^https?:/i.test(social.url) ? social.url : url(social.url)}
+                target={/^https?:/i.test(social.url) ? "_blank" : undefined}
+                rel={/^https?:/i.test(social.url) ? "noreferrer" : undefined}
+                aria-label={social.label}
+              >
+                <SocialIcon name={social.icon} />
+              </a>
+            ))}
           </div>
           <button class="music-inline" type="button" data-hero-disc>
             <span class="music-inline-icon" aria-hidden="true">♪</span>
@@ -61,7 +58,7 @@ const repos = [
 
         <section class="card announce announce-card">
           <h3>公告</h3>
-          <p>欢迎来到我的小站～ 这里主要记录一些学习笔记、折腾过程，和一些喜欢的东西。</p>
+          <p>{ANNOUNCEMENT}</p>
           <a class="text-link" href={url("/about/")}>了解更多 →</a>
         </section>
 
@@ -79,7 +76,7 @@ const repos = [
       <div class="home-col home-col-main">
         <section class="card about-card">
           <h2>About</h2>
-          <p class="about-text">这是 SorenX 的小站。写代码、折腾工具、看动漫，把值得记下来的东西放在这里。</p>
+          <p class="about-text">{ABOUT}</p>
           <div class="mini-links">
             <a class="mini-link" href={SITE.repo} target="_blank" rel="noreferrer">GitHub</a>
             <a class="mini-link" href={url("/rss.xml")}>RSS</a>
@@ -87,13 +84,13 @@ const repos = [
             <a class="mini-link" href={url("/admin/")}>后台</a>
           </div>
           <div class="repo-list">
-            {repos.map((repo) => (
+            {REPOS.map((repo) => (
               <a class="repo" href={`https://github.com/${repo.full}`} target="_blank" rel="noreferrer" data-repo={repo.full}>
                 <span class="repo-icon" aria-hidden="true">
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M12 .8a11.2 11.2 0 0 0-3.5 21.8c.6.1.8-.2.8-.5v-1.9c-3.1.7-3.8-1.4-3.8-1.4-.5-1.3-1.2-1.6-1.2-1.6-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 1.7 2.6 1.2 3.2.9.1-.7.4-1.2.7-1.5-2.5-.3-5.1-1.3-5.1-5.6 0-1.2.4-2.2 1.1-3-.1-.3-.5-1.4.1-3 0 0 .9-.3 3 1.1a10.4 10.4 0 0 1 5.5 0c2.1-1.4 3-1.1 3-1.1.6 1.6.2 2.7.1 3 .7.8 1.1 1.8 1.1 3 0 4.3-2.6 5.3-5.1 5.6.4.3.7 1 .7 2v2.9c0 .3.2.6.8.5A11.2 11.2 0 0 0 12 .8Z"/></svg>
                 </span>
                 <span class="repo-body">
-                  <span class="repo-name">XHTean / {repo.name}</span>
+                  <span class="repo-name">{repo.full.split("/")[0]} / {repo.full.split("/")[1]}</span>
                   <span class="repo-desc">{repo.desc}</span>
                   <span class="repo-meta">
                     <span>★ <b data-stars>—</b></span>

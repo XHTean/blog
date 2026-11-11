@@ -188,7 +188,7 @@ a:hover { color: var(--blue); }
 }
 .profile-avatar img { width: 100%; height: 100%; display: block; }
 .profile-name { margin: 12px 0 2px; font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
-.profile-bio { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.7; }
+.profile-bio { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.7; white-space: pre-line; }
 .profile-socials { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
 .music-inline {
   display: flex;
@@ -632,4 +632,23 @@ body:has(.hero-banner) .music-fab { display: none; }
   .admin-list ul { max-height: none; }
   .admin-editor .row2 { grid-template-columns: 1fr; }
   .admin-editor .row2 .admin-check { margin-top: 0; }
+}
+
+/* admin tabs / settings */
+.admin-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+.admin-tab { appearance: none; border: 1px solid var(--line); background: #fff; color: var(--ink-2); font-family: var(--sans); font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+.admin-tab:hover { border-color: var(--blue-2); color: var(--blue); }
+.admin-tab.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+.admin-settings { max-width: 780px; padding: 20px; }
+.admin-settings h2 { margin: 0 0 6px; }
+.admin-note code { font-family: var(--mono); font-size: 11px; }
+.admin-asset { display: flex; gap: 14px; align-items: flex-start; margin: 12px 0; padding: 10px; border: 1px dashed var(--line); border-radius: 12px; }
+.admin-asset-preview { width: 76px; height: 76px; flex: none; border-radius: 10px; overflow: hidden; background: var(--blue-soft); display: grid; place-items: center; }
+.admin-asset-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.admin-asset-preview.banner { width: 180px; height: 76px; }
+.admin-asset-body { flex: 1; min-width: 0; }
+.admin-upload { display: inline-flex; width: auto; margin-top: 4px; cursor: pointer; }
+@media (max-width: 560px) {
+  .admin-asset { flex-direction: column; }
+  .admin-asset-preview.banner { width: 100%; }
 }

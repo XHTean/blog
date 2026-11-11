@@ -1,11 +1,26 @@
+import data from "./data/site.json";
+
 export const SITE = {
-  title: "SorenX 的博客",
-  description: "写代码、工具，和一些值得记下来的事。",
-  author: "SorenX",
-  lang: "zh-CN",
+  title: data.title,
+  subtitle: data.subtitle,
+  description: data.description,
+  author: data.author,
   url: "https://xhtean.github.io",
+  lang: "zh-CN",
   repo: "https://github.com/XHTean/blog",
 };
+
+export const PROFILE = {
+  avatar: data.avatar,
+  banner: data.banner,
+  bio: data.bio,
+};
+
+export const ANNOUNCEMENT = data.announcement;
+export const ABOUT = data.about;
+export const SOCIALS = data.socials;
+export const NAV = data.nav;
+export const REPOS = data.repos;
 
 export const GISCUS = {
   enabled: false,

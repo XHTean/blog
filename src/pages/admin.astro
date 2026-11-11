@@ -41,6 +41,12 @@ import { url } from "../utils/url";
     </section>
 
     <section id="app" hidden>
+      <div class="admin-tabs">
+        <button class="admin-tab active" type="button" data-admin-tab="posts">文章</button>
+        <button class="admin-tab" type="button" data-admin-tab="settings">站点设置</button>
+      </div>
+
+      <div data-admin-panel="posts">
       <div class="admin-toolbar">
         <button class="btn" id="new" type="button">+ 新建文章</button>
         <button class="btn ghost" id="refresh" type="button">刷新</button>
@@ -85,6 +91,76 @@ import { url } from "../utils/url";
             </div>
           </form>
         </section>
+      </div>
+      </div>
+
+      <div data-admin-panel="settings" hidden>
+        <form id="settings-form" class="card admin-settings">
+          <h2>站点设置</h2>
+          <p class="admin-note">保存后会提交到 <code>src/data/site.json</code>，约 1 分钟上线。</p>
+
+          <label class="admin-field">站点标题
+            <input id="set-title" type="text" required>
+          </label>
+          <label class="admin-field">副标题
+            <input id="set-subtitle" type="text">
+          </label>
+          <label class="admin-field">站点描述
+            <textarea id="set-description" rows="2"></textarea>
+          </label>
+          <label class="admin-field">作者名
+            <input id="set-author" type="text">
+          </label>
+          <label class="admin-field">个人简介
+            <textarea id="set-bio" rows="3"></textarea>
+          </label>
+          <label class="admin-field">公告
+            <textarea id="set-announcement" rows="3"></textarea>
+          </label>
+          <label class="admin-field">About 文案
+            <textarea id="set-about" rows="3"></textarea>
+          </label>
+
+          <div class="admin-asset">
+            <div class="admin-asset-preview"><img id="preview-avatar" alt="头像预览"></div>
+            <div class="admin-asset-body">
+              <label class="admin-field">头像路径
+                <input id="set-avatar" type="text" placeholder="/uploads/avatar.jpg">
+              </label>
+              <label class="btn ghost admin-upload">上传新头像
+                <input type="file" accept="image/*" data-upload="avatar" hidden>
+              </label>
+            </div>
+          </div>
+
+          <div class="admin-asset">
+            <div class="admin-asset-preview banner"><img id="preview-banner" alt="横幅预览"></div>
+            <div class="admin-asset-body">
+              <label class="admin-field">横幅路径
+                <input id="set-banner" type="text" placeholder="/uploads/banner.jpg">
+              </label>
+              <label class="btn ghost admin-upload">上传新横幅
+                <input type="file" accept="image/*" data-upload="banner" hidden>
+              </label>
+            </div>
+          </div>
+
+          <label class="admin-field">导航栏（每行：名称|链接）
+            <textarea id="set-nav" rows="5" class="mono"></textarea>
+          </label>
+          <label class="admin-field">社交链接（每行：名称|链接|图标，图标可选 github / rss / search / settings / mail / bilibili / link）
+            <textarea id="set-socials" rows="5" class="mono"></textarea>
+          </label>
+          <label class="admin-field">GitHub 项目（每行：owner/repo|描述）
+            <textarea id="set-repos" rows="4" class="mono"></textarea>
+          </label>
+
+          <div class="admin-actions">
+            <button class="btn" type="submit">保存设置</button>
+            <a class="btn ghost" href={url("/")} target="_blank" rel="noreferrer">看前台</a>
+          </div>
+          <p class="admin-status" id="settings-status" role="status"></p>
+        </form>
       </div>
     </section>
   </div>
@@ -455,9 +531,192 @@ import { url } from "../utils/url";
         clearToken();
         current = null;
         posts = [];
+        settingsLoaded = false;
+        settingsSha = null;
         $("post-list").textContent = "";
         showLogin("已退出", "ok");
       }
+
+      var SETTINGS_PATH = "src/data/site.json";
+      var settingsSha = null;
+      var settingsLoaded = false;
+
+      function setSettingsStatus(message, tone) {
+        var el = $("settings-status");
+        if (!el) return;
+        el.textContent = message || "";
+        el.setAttribute("data-tone", tone || "");
+      }
+
+      function assetUrl(path) {
+        path = path || "";
+        return /^https?:/i.test(path) ? path : base + path.replace(/^\//, "");
+      }
+
+      function updateAssetPreviews() {
+        var avatar = $("set-avatar").value.trim();
+        var banner = $("set-banner").value.trim();
+        var avatarImg = $("preview-avatar");
+        var bannerImg = $("preview-banner");
+        if (avatarImg) {
+          avatarImg.src = avatar ? assetUrl(avatar) : "";
+          avatarImg.style.display = avatar ? "block" : "none";
+        }
+        if (bannerImg) {
+          bannerImg.src = banner ? assetUrl(banner) : "";
+          bannerImg.style.display = banner ? "block" : "none";
+        }
+      }
+
+      function fillSettings(settings) {
+        $("set-title").value = settings.title || "";
+        $("set-subtitle").value = settings.subtitle || "";
+        $("set-description").value = settings.description || "";
+        $("set-author").value = settings.author || "";
+        $("set-bio").value = settings.bio || "";
+        $("set-announcement").value = settings.announcement || "";
+        $("set-about").value = settings.about || "";
+        $("set-avatar").value = settings.avatar || "";
+        $("set-banner").value = settings.banner || "";
+        $("set-nav").value = (settings.nav || []).map(function (item) {
+          return [item.label || "", item.url || ""].join("|");
+        }).join("\n");
+        $("set-socials").value = (settings.socials || []).map(function (item) {
+          return [item.label || "", item.url || "", item.icon || "link"].join("|");
+        }).join("\n");
+        $("set-repos").value = (settings.repos || []).map(function (item) {
+          return [item.full || "", item.desc || ""].join("|");
+        }).join("\n");
+        updateAssetPreviews();
+      }
+
+      async function loadSettings() {
+        setSettingsStatus("加载设置…");
+        var data = await api("/repos/" + OWNER + "/" + REPO + "/contents/" + encodePath(SETTINGS_PATH) + "?ref=" + BRANCH);
+        settingsSha = data.sha;
+        fillSettings(JSON.parse(b64decode(data.content)));
+        settingsLoaded = true;
+        setSettingsStatus("设置已加载", "ok");
+      }
+
+      function parseSocials(text) {
+        return text.split(/\r?\n/).map(function (line) { return line.trim(); }).filter(Boolean).map(function (line) {
+          var parts = line.split("|").map(function (item) { return item.trim(); });
+          return { label: parts[0] || "链接", url: parts[1] || "", icon: parts[2] || "link" };
+        }).filter(function (item) { return item.url; });
+      }
+
+      function parseNav(text) {
+        return text.split(/\r?\n/).map(function (line) { return line.trim(); }).filter(Boolean).map(function (line) {
+          var parts = line.split("|").map(function (item) { return item.trim(); });
+          return { label: parts[0] || "", url: parts[1] || "/" };
+        }).filter(function (item) { return item.label; });
+      }
+
+      function parseRepos(text) {
+        return text.split(/\r?\n/).map(function (line) { return line.trim(); }).filter(Boolean).map(function (line) {
+          var parts = line.split("|").map(function (item) { return item.trim(); });
+          return { full: parts[0] || "", desc: parts[1] || "" };
+        }).filter(function (item) { return item.full; });
+      }
+
+      async function saveSettings(event) {
+        event.preventDefault();
+        if (!settingsLoaded) {
+          return setSettingsStatus("设置还没加载成功，先点「站点设置」重新加载", "err");
+        }
+        var title = $("set-title").value.trim();
+        if (!title) return setSettingsStatus("站点标题不能为空", "err");
+        var settings = {
+          title: title,
+          subtitle: $("set-subtitle").value.trim(),
+          description: $("set-description").value.trim(),
+          author: $("set-author").value.trim() || "SorenX",
+          bio: $("set-bio").value,
+          announcement: $("set-announcement").value,
+          about: $("set-about").value,
+          banner: $("set-banner").value.trim() || "/banner.svg",
+          avatar: $("set-avatar").value.trim() || "/avatar.svg",
+          nav: parseNav($("set-nav").value),
+          socials: parseSocials($("set-socials").value),
+          repos: parseRepos($("set-repos").value)
+        };
+        var payload = {
+          message: "Update site settings",
+          content: b64encode(JSON.stringify(settings, null, 2) + "\n"),
+          branch: BRANCH
+        };
+        if (settingsSha) payload.sha = settingsSha;
+        setSettingsStatus("保存中…");
+        try {
+          var result = await api("/repos/" + OWNER + "/" + REPO + "/contents/" + encodePath(SETTINGS_PATH), {
+            method: "PUT",
+            body: JSON.stringify(payload)
+          });
+          settingsSha = result.content.sha;
+          setSettingsStatus("设置已保存，约 1 分钟上线", "ok");
+        } catch (e) {
+          setSettingsStatus("保存失败：" + e.message, "err");
+        }
+      }
+
+      function readFileAsDataUrl(file) {
+        return new Promise(function (resolve, reject) {
+          var reader = new FileReader();
+          reader.onload = function () { resolve(String(reader.result)); };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      async function uploadImage(field, file) {
+        var ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+        var filename = field + "-" + Date.now() + "." + ext;
+        var path = "public/uploads/" + filename;
+        setSettingsStatus("上传中…");
+        var dataUrl = await readFileAsDataUrl(file);
+        var base64 = dataUrl.split(",")[1] || "";
+        await api("/repos/" + OWNER + "/" + REPO + "/contents/" + encodePath(path), {
+          method: "PUT",
+          body: JSON.stringify({ message: "upload " + field, content: base64, branch: BRANCH })
+        });
+        var value = "/uploads/" + filename;
+        $(field === "avatar" ? "set-avatar" : "set-banner").value = value;
+        updateAssetPreviews();
+        setSettingsStatus("图片已上传，记得保存设置", "ok");
+      }
+
+      document.querySelectorAll("[data-upload]").forEach(function (input) {
+        input.addEventListener("change", async function () {
+          var file = input.files && input.files[0];
+          if (!file) return;
+          try {
+            await uploadImage(input.getAttribute("data-upload"), file);
+          } catch (e) {
+            setSettingsStatus("上传失败：" + e.message, "err");
+          } finally {
+            input.value = "";
+          }
+        });
+      });
+
+      $("set-avatar").addEventListener("input", updateAssetPreviews);
+      $("set-banner").addEventListener("input", updateAssetPreviews);
+      $("settings-form").addEventListener("submit", saveSettings);
+
+      document.querySelectorAll("[data-admin-tab]").forEach(function (tab) {
+        tab.addEventListener("click", function () {
+          var name = tab.getAttribute("data-admin-tab");
+          document.querySelectorAll("[data-admin-tab]").forEach(function (item) { item.classList.remove("active"); });
+          tab.classList.add("active");
+          document.querySelectorAll("[data-admin-panel]").forEach(function (panel) {
+            panel.hidden = panel.getAttribute("data-admin-panel") !== name;
+          });
+          if (name === "settings" && !settingsLoaded) {
+            loadSettings().catch(function (e) { setSettingsStatus("加载失败：" + e.message, "err"); });
+          }
+        });
+      });
 
       $("connect").addEventListener("click", connect);
       $("logout").addEventListener("click", logout);

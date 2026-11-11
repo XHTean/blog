@@ -1,25 +1,31 @@
 ---
-import { SITE } from "../site";
+import { SITE, NAV } from "../site";
 import { url } from "../utils/url";
 
 const path = Astro.url.pathname;
 const home = url("/");
 const overlay = path === home;
-const links = [
-  { href: home, label: "首页" },
-  { href: url("/archive/"), label: "归档" },
-  { href: url("/tags/"), label: "标签" },
-  { href: url("/about/"), label: "关于" },
-];
-const isActive = (href: string) =>
-  href === home ? path === home : path.startsWith(href);
+const links = (NAV || []).map((item) => {
+  const external = /^https?:/i.test(item.url);
+  return {
+    href: external ? item.url : url(item.url),
+    label: item.label,
+    external,
+    active: !external && (item.url === "/" ? path === home : path.startsWith(url(item.url))),
+  };
+});
 ---
 <header class={overlay ? "site-header overlay" : "site-header"}>
   <div class="wrap header-inner">
-    <a class="brand" href={home}><span class="brand-mark">S</span>SorenX</a>
+    <a class="brand" href={home}><span class="brand-mark">S</span>{SITE.author}</a>
     <nav class="nav" aria-label="主导航">
       {links.map((link) => (
-        <a href={link.href} class={isActive(link.href) ? "nav-link active" : "nav-link"}>
+        <a
+          href={link.href}
+          class={link.active ? "nav-link active" : "nav-link"}
+          target={link.external ? "_blank" : undefined}
+          rel={link.external ? "noreferrer" : undefined}
+        >
           {link.label}
         </a>
       ))}
