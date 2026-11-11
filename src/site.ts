@@ -9,9 +9,9 @@ export const SITE = {
 
 export const GISCUS = {
   repo: "XHTean/blog",
-  repoId: "",
-  category: "Comments",
-  categoryId: "",
+  repoId: "R_kgDOVqGPcA",
+  category: "Announcements",
+  categoryId: "DIC_kwDOVqGPcM4DK2z8",
   mapping: "pathname",
   lang: "zh-CN",
 };

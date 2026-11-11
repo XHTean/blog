@@ -34,8 +34,8 @@ pnpm preview
 1. 仓库保持 **public**
 2. 仓库 `Settings → General → Features`，勾选 **Discussions**
 3. 安装 giscus App：https://github.com/apps/giscus ，授权到 `XHTean/blog`
-4. 打开 https://giscus.app ，填入仓库，分类选 `Comments`（或 `Announcements`）
-5. 把页面上的 `data-repo-id` 和 `data-category-id` 填到 `src/site.ts` 的 `GISCUS`
+4. 打开 https://giscus.app ，填入仓库，分类已设为 `Announcements`
+5. `src/site.ts` 里已填好 repo ID 和分类 ID
 6. 提交后重新部署
 
 ## 部署
