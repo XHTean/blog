@@ -166,6 +166,15 @@ import { url } from "../utils/url";
           <label class="admin-field">项目（每行：名称|链接|描述）
             <textarea id="set-projects" rows="4" class="mono"></textarea>
           </label>
+          <label class="admin-field">音乐（每行：标题|歌手|音频链接）
+            <textarea id="set-tracks" rows="4" class="mono"></textarea>
+          </label>
+          <label class="btn ghost admin-upload">上传音频
+            <input type="file" accept="audio/*" data-upload="audio" hidden>
+          </label>
+          <label class="admin-field">收藏（每行：分类|标题|说明|链接）
+            <textarea id="set-collection" rows="4" class="mono"></textarea>
+          </label>
 
           <div class="admin-actions">
             <button class="btn" type="submit">保存设置</button>
@@ -608,6 +617,12 @@ import { url } from "../utils/url";
         $("set-projects").value = (settings.projects || []).map(function (item) {
           return [item.name || "", item.url || "", item.desc || ""].join("|");
         }).join("\n");
+        $("set-tracks").value = (settings.tracks || []).map(function (item) {
+          return [item.title || "", item.artist || "", item.src || ""].join("|");
+        }).join("\n");
+        $("set-collection").value = (settings.collection || []).map(function (item) {
+          return [item.type || "", item.title || "", item.note || "", item.url || ""].join("|");
+        }).join("\n");
         updateAssetPreviews();
       }
 
@@ -632,6 +647,20 @@ import { url } from "../utils/url";
           var parts = line.split("|").map(function (item) { return item.trim(); });
           return { label: parts[0] || "", url: parts[1] || "/" };
         }).filter(function (item) { return item.label; });
+      }
+
+      function parseTracks(text) {
+        return text.split(/\r?\n/).map(function (line) { return line.trim(); }).filter(Boolean).map(function (line) {
+          var parts = line.split("|").map(function (item) { return item.trim(); });
+          return { title: parts[0] || "未命名", artist: parts[1] || "", src: parts[2] || "" };
+        }).filter(function (item) { return item.src; });
+      }
+
+      function parseCollection(text) {
+        return text.split(/\r?\n/).map(function (line) { return line.trim(); }).filter(Boolean).map(function (line) {
+          var parts = line.split("|").map(function (item) { return item.trim(); });
+          return { type: parts[0] || "其他", title: parts[1] || "", note: parts[2] || "", url: parts[3] || "#" };
+        }).filter(function (item) { return item.title; });
       }
 
       function parseFriends(text) {
@@ -684,6 +713,8 @@ import { url } from "../utils/url";
           friends: parseFriends($("set-friends").value),
           gallery: parseGallery($("set-gallery").value),
           projects: parseProjects($("set-projects").value),
+          tracks: parseTracks($("set-tracks").value),
+          collection: parseCollection($("set-collection").value),
           repos: parseRepos($("set-repos").value)
         };
         var payload = {
@@ -737,12 +768,31 @@ import { url } from "../utils/url";
         setSettingsStatus("图片已上传，记得保存设置", "ok");
       }
 
+      async function uploadAudio(file) {
+        var ext = (file.name.split(".").pop() || "mp3").toLowerCase().replace(/[^a-z0-9]/g, "") || "mp3";
+        var filename = "audio-" + Date.now() + "." + ext;
+        var path = "public/music/" + filename;
+        setSettingsStatus("上传中…");
+        var dataUrl = await readFileAsDataUrl(file);
+        var base64 = dataUrl.split(",")[1] || "";
+        await api("/repos/" + OWNER + "/" + REPO + "/contents/" + encodePath(path), {
+          method: "PUT",
+          body: JSON.stringify({ message: "upload audio", content: base64, branch: BRANCH })
+        });
+        var value = "/music/" + filename;
+        var field = $("set-tracks");
+        field.value = (field.value.trim() ? field.value.trim() + "\n" : "") + "新音频||" + value;
+        setSettingsStatus("音频已上传，记得填标题和歌手并保存设置", "ok");
+      }
+
       document.querySelectorAll("[data-upload]").forEach(function (input) {
         input.addEventListener("change", async function () {
           var file = input.files && input.files[0];
           if (!file) return;
           try {
-            await uploadImage(input.getAttribute("data-upload"), file);
+            var field = input.getAttribute("data-upload");
+            if (field === "audio") await uploadAudio(file);
+            else await uploadImage(field, file);
           } catch (e) {
             setSettingsStatus("上传失败：" + e.message, "err");
           } finally {

@@ -1,0 +1,53 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { COLLECTION } from "../site";
+
+const types = [...new Set(COLLECTION.map((item) => item.type))];
+---
+<BaseLayout title="收藏" description="工具、网站和喜欢的东西">
+  <div class="wrap">
+    <section class="page-head">
+      <h1>收藏</h1>
+      <p>COLLECTION / {COLLECTION.length} 个</p>
+    </section>
+
+    {types.length > 1 && (
+      <div class="post-tabs">
+        <button class="post-tab active" type="button" data-collection-tag="全部">全部</button>
+        {types.map((type) => (
+          <button class="post-tab" type="button" data-collection-tag={type}>{type}</button>
+        ))}
+      </div>
+    )}
+
+    {COLLECTION.length > 0 ? (
+      <div class="collection-grid">
+        {COLLECTION.map((item) => (
+          <a class="collection-card" href={item.url} target="_blank" rel="noreferrer" data-type={item.type}>
+            <span class="collection-type">{item.type}</span>
+            <b>{item.title}</b>
+            <p>{item.note}</p>
+            <i aria-hidden="true">↗</i>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <div class="card empty-state">还没有收藏，去后台「站点设置 → 收藏」添加。</div>
+    )}
+  </div>
+
+  <script>
+    (function () {
+      document.querySelectorAll("[data-collection-tag]").forEach(function (tab) {
+        tab.addEventListener("click", function () {
+          document.querySelectorAll("[data-collection-tag]").forEach(function (item) { item.classList.remove("active"); });
+          tab.classList.add("active");
+          var type = tab.getAttribute("data-collection-tag");
+          document.querySelectorAll(".collection-card").forEach(function (card) {
+            card.hidden = type !== "全部" && card.getAttribute("data-type") !== type;
+          });
+        });
+      });
+    })();
+  </script>
+</BaseLayout>

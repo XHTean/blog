@@ -1,8 +1,8 @@
 ---
-import { tracks } from "../data/tracks";
+import { TRACKS } from "../site";
 import { url } from "../utils/url";
 
-const list = tracks.map((track) => ({
+const list = TRACKS.map((track) => ({
   ...track,
   src: /^https?:/i.test(track.src) ? track.src : url(track.src),
 }));
@@ -198,6 +198,13 @@ const list = tracks.map((track) => ({
 
     if (toggleBtn) toggleBtn.addEventListener("click", toggle);
     heroDiscs.forEach(function (el) { el.addEventListener("click", toggle); });
+
+    window.addEventListener("play-track", function (event) {
+      var i = Number(event.detail);
+      if (Number.isInteger(i) && i >= 0 && i < tracks.length) {
+        load(i, true);
+      }
+    });
 
     if (prevBtn) {
       prevBtn.addEventListener("click", function () {

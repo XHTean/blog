@@ -24,6 +24,8 @@ export const REPOS = data.repos;
 export const FRIENDS = data.friends;
 export const GALLERY = data.gallery;
 export const PROJECTS = data.projects;
+export const TRACKS = data.tracks;
+export const COLLECTION = data.collection;
 
 export const GISCUS = {
   enabled: false,

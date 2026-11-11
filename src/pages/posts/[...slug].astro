@@ -42,6 +42,7 @@ const minutes = Math.max(1, Math.round(chars / 400));
         <div class="article-meta">
           <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
           <span>约 {minutes} 分钟</span>
+          <span>阅读 <span id="busuanzi_value_page_pv">—</span></span>
           {post.data.tags.map((tag) => (
             <a class="tag" href={url(`/tags/${encodeURIComponent(tag)}/`)}>#{tag}</a>
           ))}
@@ -53,6 +54,7 @@ const minutes = Math.max(1, Math.round(chars / 400));
           <button class="share-btn" type="button" data-share>复制链接</button>
           <a class="share-btn" href={url("/archive/")}>看归档</a>
           <a class="share-btn" href={url("/tags/")}>看标签</a>
+          <button class="share-btn" type="button" data-like>♡ 点赞</button>
         </div>
 
         <div class="prose">
@@ -94,6 +96,22 @@ const minutes = Math.max(1, Math.round(chars / 400));
       update();
       window.addEventListener("scroll", update, { passive: true });
       window.addEventListener("resize", update);
+
+      var like = document.querySelector("[data-like]");
+      if (like) {
+        var key = "liked:" + window.location.pathname;
+        var liked = false;
+        try { liked = localStorage.getItem(key) === "1"; } catch (e) {}
+        like.textContent = liked ? "♥ 已赞" : "♡ 点赞";
+        like.addEventListener("click", function () {
+          liked = !liked;
+          try {
+            if (liked) localStorage.setItem(key, "1");
+            else localStorage.removeItem(key);
+          } catch (e) {}
+          like.textContent = liked ? "♥ 已赞" : "♡ 点赞";
+        });
+      }
 
       var share = document.querySelector("[data-share]");
       if (share) {

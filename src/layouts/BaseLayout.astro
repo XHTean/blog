@@ -2,6 +2,7 @@
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import MusicPlayer from "../components/MusicPlayer.astro";
+import Mascot from "../components/Mascot.astro";
 import { SITE } from "../site";
 import { url } from "../utils/url";
 import "../styles/global.css";
@@ -50,5 +51,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? SITE.url);
     </main>
     {!bare && <Footer />}
     {!bare && <MusicPlayer />}
+    {!bare && <Mascot />}
+    {!bare && (
+      <script is:inline async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    )}
   </body>
 </html>

@@ -1,0 +1,57 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { TRACKS } from "../site";
+import { url } from "../utils/url";
+
+const asset = (path: string) => (/^https?:/i.test(path) ? path : url(path));
+---
+<BaseLayout title="音乐" description="常听的歌">
+  <div class="wrap">
+    <section class="page-head">
+      <h1>音乐</h1>
+      <p>MUSIC / {TRACKS.length} 首</p>
+    </section>
+
+    <section class="card music-hero">
+      <div class="music-hero-disc" aria-hidden="true"><span>S</span></div>
+      <div>
+        <h2>播放列表</h2>
+        <p class="about-text">点下面的歌开始播放，右下角的唱片按钮可以打开完整播放器。</p>
+        {TRACKS.length > 0 && <button class="btn" type="button" data-play-all data-track-index="0">播放第一首</button>}
+      </div>
+    </section>
+
+    {TRACKS.length > 0 ? (
+      <div class="card track-page-list">
+        {TRACKS.map((track, i) => (
+          <div class="track-row">
+            <span class="track-no">{String(i + 1).padStart(2, "0")}</span>
+            <div class="track-info">
+              <b>{track.title}</b>
+              <span>{track.artist}</span>
+            </div>
+            <button class="track-play" type="button" data-track-index={i} aria-label={`播放 ${track.title}`}>▶</button>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div class="card empty-state">还没有音乐，去后台「站点设置 → 音乐」添加。</div>
+    )}
+  </div>
+
+  <script>
+    (function () {
+      document.querySelectorAll("[data-track-index]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          window.dispatchEvent(new CustomEvent("play-track", { detail: Number(button.getAttribute("data-track-index")) }));
+        });
+      });
+      var all = document.querySelector("[data-play-all]");
+      if (all) {
+        all.addEventListener("click", function () {
+          window.dispatchEvent(new CustomEvent("play-track", { detail: 0 }));
+        });
+      }
+    })();
+  </script>
+</BaseLayout>

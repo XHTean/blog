@@ -62,8 +62,8 @@
       "url": "/projects/"
     },
     {
-      "label": "关于",
-      "url": "/about/"
+      "label": "更多",
+      "url": "/more/"
     }
   ],
   "friends": [
@@ -94,6 +94,38 @@
       "name": "XHTean/shortvideo-parser",
       "url": "https://github.com/XHTean/shortvideo-parser",
       "desc": "短视频素材解析小程序 + Node 后端。"
+    }
+  ],
+  "tracks": [
+    {
+      "title": "夜曲",
+      "artist": "SorenX",
+      "src": "/music/night-gallery.wav"
+    },
+    {
+      "title": "余晖",
+      "artist": "SorenX",
+      "src": "/music/afterglow.wav"
+    }
+  ],
+  "collection": [
+    {
+      "type": "工具",
+      "title": "Astro",
+      "note": "本站使用的静态站点框架。",
+      "url": "https://astro.build"
+    },
+    {
+      "type": "工具",
+      "title": "GitHub",
+      "note": "代码托管和自动部署。",
+      "url": "https://github.com"
+    },
+    {
+      "type": "网站",
+      "title": "DeepSeek",
+      "note": "常用的模型服务。",
+      "url": "https://www.deepseek.com"
     }
   ]
 }

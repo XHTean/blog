@@ -1,0 +1,47 @@
+---
+import { url } from "../utils/url";
+---
+<div class="mascot" data-mascot>
+  <div class="mascot-bubble" data-mascot-bubble hidden></div>
+  <button class="mascot-avatar" type="button" data-mascot-toggle aria-label="看板娘">
+    <img src={url("/avatar.svg")} alt="" />
+  </button>
+  <button class="mascot-close" type="button" data-mascot-close aria-label="关闭看板娘">×</button>
+</div>
+<script>
+  (function () {
+    var wrap = document.querySelector("[data-mascot]");
+    if (!wrap) return;
+    try {
+      if (localStorage.getItem("mascot-hidden") === "1") {
+        wrap.hidden = true;
+        return;
+      }
+    } catch (e) {}
+    var bubble = document.querySelector("[data-mascot-bubble]");
+    var lines = [
+      "今天也要写点什么。",
+      "要不要听首歌？",
+      "去后台写一篇？",
+      "慢慢来，比较快。",
+      "欢迎来到我的小屋。"
+    ];
+    var index = 0;
+    var hideTimer;
+    function show() {
+      bubble.textContent = lines[index % lines.length];
+      bubble.hidden = false;
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(function () { bubble.hidden = true; }, 6000);
+    }
+    setTimeout(show, 1800);
+    document.querySelector("[data-mascot-toggle]").addEventListener("click", function () {
+      index += 1;
+      show();
+    });
+    document.querySelector("[data-mascot-close]").addEventListener("click", function () {
+      wrap.hidden = true;
+      try { localStorage.setItem("mascot-hidden", "1"); } catch (e) {}
+    });
+  })();
+</script>

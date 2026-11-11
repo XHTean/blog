@@ -1,0 +1,32 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { url } from "../utils/url";
+
+const links = [
+  { label: "音乐", desc: "播放列表、当前播放", href: url("/music/") },
+  { label: "收藏", desc: "工具和常看的网站", href: url("/collection/") },
+  { label: "时间线", desc: "按时间读文章", href: url("/timeline/") },
+  { label: "标签", desc: "按标签找文章", href: url("/tags/") },
+  { label: "搜索", desc: "按标题、摘要、标签搜", href: url("/search/") },
+  { label: "关于", desc: "这个博客和作者", href: url("/about/") },
+  { label: "后台", desc: "写文章、改站点设置", href: url("/admin/") },
+];
+---
+<BaseLayout title="更多" description="更多页面">
+  <div class="wrap">
+    <section class="page-head">
+      <h1>更多</h1>
+      <p>MORE / {links.length} 个入口</p>
+    </section>
+
+    <div class="more-grid">
+      {links.map((link) => (
+        <a class="more-card" href={link.href}>
+          <b>{link.label}</b>
+          <span>{link.desc}</span>
+          <i aria-hidden="true">→</i>
+        </a>
+      ))}
+    </div>
+  </div>
+</BaseLayout>
